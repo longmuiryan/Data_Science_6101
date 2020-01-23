@@ -1,4 +1,4 @@
-### EdwinBet Team Repo 
+## EdwinBet Team Repo 
 -------------------------------------------
 
 ### Useful resources
