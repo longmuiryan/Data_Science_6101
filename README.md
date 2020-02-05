@@ -4,6 +4,7 @@
 - [Blackboard](https://blackboard.gwu.edu/webapps/blackboard/execute/announcement?method=search&context=course_entry&course_id=_329835_1&handle=announcements_entry&mode=view)
 - [Google Drive](https://drive.google.com/drive/folders/19CDOry6OVsJSi0LbydKPZLYdrRuIJ8M-?usp=sharing)
 - [Team Engagement](https://docs.google.com/spreadsheets/d/1B2WjGDiOi3Nq-p7vBT-zga_UOfieWEFjMDfPVhdXdXY/edit?usp=sharing)
+- [Tasks & Deadllines](https://docs.google.com/document/d/17wvloF7evRfeq9QKuHEYWnoTCxlaXxnaUJiWJepGZ10/edit?usp=sharing)
 
 ### Recommended Material
 - [Introduction to Tidyverse](https://www.datacamp.com/courses/introduction-to-the-tidyverse)
