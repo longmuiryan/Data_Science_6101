@@ -1,3 +1,4 @@
+<<<<<<< Updated upstream
 # History files
 .Rhistory
 .Rapp.history
@@ -44,3 +45,23 @@ vignettes/*.pdf
 
 # Git ignore 
 .gitignore
+=======
+
+.DS_Store
+.Rhistory
+.Rproj.user/F6329A2D/console06/INDEX001
+*.pper
+.Rproj.user/F6329A2D/rmd-outputs
+.Rproj.user/F6329A2D/saved_source_markers
+.Rproj.user/F6329A2D/sources/per/t/DA5079D8
+.Rproj.user/F6329A2D/sources/per/t/DA5079D8-contents
+.Rproj.user/F6329A2D/sources/per/t/E891F59C
+.Rproj.user/F6329A2D/sources/per/t/E891F59C-contents
+.Rproj.user/F6329A2D/sources/prop/8A24755E
+.Rproj.user/F6329A2D/sources/prop/BD4498D6
+.Rproj.user/F6329A2D/sources/prop/C9C91FAB
+.Rproj.user/F6329A2D/sources/prop/DDD6FBB1
+.Rproj.user/F6329A2D/sources/prop/INDEX
+.Rproj.user/shared/notebooks/patch-chunk-names
+.Rproj.user/shared/notebooks/paths
+>>>>>>> Stashed changes
