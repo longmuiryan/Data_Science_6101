@@ -1,0 +1,181 @@
+---
+title: "Pagan_Wk03"
+author: "Michael Pagan"
+date: "2/2/2020"
+output:
+  html_document:
+    code_folding: hide
+    number_sections: true
+    toc: yes
+    toc_depth: 4
+    toc_float: yes
+  pdf_document:
+    toc: yes
+    toc_depth: '4'
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, fig.width = 10, fig.height = 5,
+  warning=FALSE, message=FALSE)
+```
+
+```{r basicfcn, include=F}
+# Knit does not work with install.packages functions. Any install.packages statements in the RMD file needs to be commented out before knitting. 
+# And if the RMD is sent to another person/computer that requires installing the package, the user can remove the commenting and install the package.
+# Here, we use another option by introducting this convenient function, we named it loadPkg(), which uses install.packages() and require(). 
+# The function require() is similar to library(), except it returns a TRUE/FALSE value.
+# You can add quietly=T option to the require() function
+loadPkg = function(x) {if (!require(x,character.only=T, quietly =T)) { install.packages(x,dep=T,repos="http://cran.us.r-project.org"); if(!require(x,character.only=T)) stop("Package not found") } }
+
+# Load packages
+loadPkg("ggplot2")
+loadPkg("gridExtra")
+```
+
+# Pizza Homework
+## Question 1
+First, import the file
+```{r Q1, include=T}
+setwd("~/Documents/GW/Intro to Data Science/2020-01-29/Assignment")
+
+file <- "Pizza.csv"
+
+pizza_file <- read.csv(file)
+pizza_df <- data.frame(pizza_file)
+```
+
+## Question 2
+There are `r length(pizza_df)` datapoints.
+
+## Question 3
+Summary of the pizza dataset.
+```{r Q3, include=T}
+summary(pizza_df)
+```
+
+## Question 4
+Histograms, boxplots, and QQ-plots for variables sodium and cal.
+```{r histograms, include=T}
+# Sodium Histogram
+sodium_hist <- ggplot(pizza_df,aes(x=sodium)) +
+  geom_histogram(bins=30, color="cyan", fill="pink") +
+  labs(title="Sodium Content", x="Sodium/100g", y="Frequency") +
+  theme_minimal() + 
+  theme(plot.title = element_text(hjust = 0.5))
+
+# Calorie Histogram
+calorie_hist <- ggplot(pizza_df,aes(x=cal)) +
+  geom_histogram(bins=30, color="pink", fill="cyan") +
+  labs(title="calorie Content", x="calories/100g", y="Frequency") +
+  theme_minimal() + 
+  theme(plot.title = element_text(hjust = 0.5))
+
+grid.arrange(sodium_hist, calorie_hist, nrow=1)
+```
+
+```{r Boxplots, include=T}
+# Sodium Boxplot
+sodium_box <- ggplot(pizza_df,aes(x="", y=sodium)) +
+  geom_boxplot(color="cyan", fill="pink") +
+  labs(title="Sodium Content", x="Sodium", y="Sodium/100g") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+# Calorie Boxplot
+calorie_box <- ggplot(pizza_df,aes(x="", y=cal)) +
+  geom_boxplot(color="pink", fill="cyan") +
+  labs(title="calorie Content", x="Calories", y="calories/100g") +
+  theme_minimal() + 
+  theme(plot.title = element_text(hjust = 0.5))
+  
+grid.arrange(sodium_box, calorie_box, nrow=1)
+```
+
+```{r QQ Plots, include=T}
+# Sodium QQ Plot
+sodium_qq <- ggplot(pizza_df, aes(sample=sodium)) + 
+  stat_qq(distribution = stats::qnorm, color="pink") +
+  stat_qq_line(distribution = stats::qnorm) +
+  labs(title = "Sodium QQ-Plot", x="Standard Deviation", y="Sodium/100g") +
+  theme_minimal() + 
+  theme(plot.title = element_text(hjust = 0.5))
+
+# Calorie QQ Plot
+calorie_qq <- ggplot(pizza_df, aes(sample=cal)) + 
+  stat_qq(distribution = stats::qnorm, color="cyan") +
+  stat_qq_line(distribution = stats::qnorm) +
+  labs(title = "Calorie QQ-Plot", x="Standard Deviation", y="calories/100g") +
+  theme_minimal() + 
+  theme(plot.title = element_text(hjust = 0.5))
+
+grid.arrange(sodium_qq, calorie_qq, nrow=1)
+```
+
+## Question 5
+Run the Shapiro-Wilk test on the variables sodium and cal.
+```{r Q5, include=T}
+#Shapiro-Wilk Test
+shapiro.test(pizza_df$sodium)
+shapiro.test(pizza_df$cal)
+```
+
+## Question 6
+Remove outliers from variables sodium and cal.
+```{r Q6 outlierKD, include=F}
+outlierKD <- function(dt, var, remove = TRUE) {
+  var_name <- eval(substitute(var),eval(dt))
+  tot <- sum(!is.na(var_name))
+  na1 <- sum(is.na(var_name))
+  m1 <- mean(var_name, na.rm = T)
+  par(mfrow=c(2, 2), oma=c(0,0,3,0))
+  boxplot(var_name, main="With outliers")
+  hist(var_name, main="With outliers", xlab=NA, ylab=NA)
+  outlier <- boxplot.stats(var_name)$out
+  mo <- mean(outlier)
+  var_name <- ifelse(var_name %in% outlier, NA, var_name)
+  boxplot(var_name, main="Without outliers")
+  hist(var_name, main="Without outliers", xlab=NA, ylab=NA)
+  title("Outlier Check", outer=TRUE)
+  na2 <- sum(is.na(var_name))
+  message("Outliers identified: ", na2 - na1, " from ", tot, " observations")
+  message("Proportion (%) of outliers: ", (na2 - na1) / tot*100)
+  message("Mean of the outliers: ", mo)
+  m2 <- mean(var_name, na.rm = T)
+  message("Mean without removing outliers: ", m1)
+  message("Mean if we remove outliers: ", m2)
+  if(remove){
+    dt[as.character(substitute(var))] <- invisible(var_name)
+    assign(as.character(as.list(match.call())$dt), dt, envir = .GlobalEnv)
+    message("Outliers successfully removed", "\n")
+    return(invisible(dt))
+  } else{
+    message("Nothing changed", "\n")
+    return(invisible(var_name))
+  }
+}
+```
+
+```{r run outlierKD, include=F}
+outlierKD(pizza_df, sodium)
+outlierKD(pizza_df, cal)
+```
+
+```{r new QQ plots, include=T}
+# Sodium QQ Plot
+sodium_qq <- ggplot(pizza_df, aes(sample=sodium)) + 
+  stat_qq(distribution = stats::qnorm, color="pink") +
+  stat_qq_line(distribution = stats::qnorm) +
+  labs(title = "Sodium QQ-Plot", x="Normal Theoretical Quantile", y="Sodium/100g") +
+  theme_minimal() + 
+  theme(plot.title = element_text(hjust = 0.5))
+
+# Calorie QQ Plot
+calorie_qq <- ggplot(pizza_df, aes(sample=cal)) + 
+  stat_qq(distribution = stats::qnorm, color="cyan") +
+  stat_qq_line(distribution = stats::qnorm) +
+  labs(title = "Calorie QQ-Plot", x="Normal Theoretical Quantile", y="calories/100g") +
+  theme_minimal() + 
+  theme(plot.title = element_text(hjust = 0.5))
+
+grid.arrange(sodium_qq, calorie_qq, nrow=1)
+```
