@@ -45,6 +45,7 @@ vignettes/*.pdf
 
 # Git ignore 
 .gitignore
+<<<<<<< Updated upstream
 =======
 
 .DS_Store
@@ -64,4 +65,9 @@ vignettes/*.pdf
 .Rproj.user/F6329A2D/sources/prop/INDEX
 .Rproj.user/shared/notebooks/patch-chunk-names
 .Rproj.user/shared/notebooks/paths
+>>>>>>> Stashed changes
+=======
+
+
+
 >>>>>>> Stashed changes
