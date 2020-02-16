@@ -1,0 +1,171 @@
+---
+title: "Wine EDA"
+output: html_notebook
+---
+```{r}
+knitr::opts_chunk$set(warning = F, results = T, message = F)
+options(scientific=T, digits = 3) 
+
+loadPkg = function(x) { if (!require(x,character.only=T, quietly =T)) { install.packages(x,dep=T,repos="http://cran.us.r-project.org"); if(!require(x,character.only=T)) stop("Package not found") } }
+detach_package = function(pkg, character.only = FALSE) { if(!character.only) { pkg <- deparse(substitute(pkg)) } }
+  search_item <- paste("package", pkg,sep = ":") 
+  while(search_item %in% search()) { detach(search_item, unload = TRUE, character.only = TRUE) } 
+  
+loadPkg("ggplot2")
+loadPkg("tidyverse")
+loadPkg("dplyr")
+```
+
+```{r}
+wine <- data.frame(read.csv("winemag-data_first150k.csv"))
+```
+
+
+# =============================================================================
+# EDA Section 
+#  Objectives: Learn about California wine country 
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# Lets start off easy. Click on the dataframe in the global working 
+# enviroment and get an idea of what you're working with. Alternatively 
+# you can use functions like head(), summary(), and glipse() to do the 
+# same thing
+# -----------------------------------------------------------------------------
+```{r}
+glimpse(wine)
+```
+
+
+# -----------------------------------------------------------------------------
+#From around the world, what countries are ranking above average and what countries are top 10 with the highest wine points?
+# -----------------------------------------------------------------------------
+
+```{r}
+winecountry <- wine %>%
+  group_by(country) %>%
+  summarize(Average = mean(points))%>%
+  arrange(desc(Average))
+winecountry
+top_n(winecountry, 10)
+
+Total_winecountry_avg <- wine %>%
+  group_by("country") %>%
+  summarize(Average = mean(points))
+Total_winecountry_avg
+
+#TRYING TO GENERATE Above average wines
+#explore_wine <- wine %>%
+ # filter(winecountry > winecountry_avg)
+
+```
+
+# -----------------------------------------------------------------------------
+# Worldwide, what wine has the highest rating? 
+# Biased: What is the frequency of ratings by each country?
+# -----------------------------------------------------------------------------
+
+```{r}
+winecountry <- wine %>%
+  group_by(variety) %>%
+  summarize(Average = mean(points))%>%
+  arrange(desc(Average))
+winecountry
+top_n(winecountry, 10)
+
+countryfreq <- wine %>%
+  group_by(country) %>%
+  summarize(count = n()) %>%
+  arrange(desc(count))
+countryfreq
+```
+
+
+# -----------------------------------------------------------------------------
+# Using the Top 10 countries, what wine has the highest rating?
+# -----------------------------------------------------------------------------
+
+```{r}
+Top10_winerank <- wine %>%
+  filter(winecountry) %>%
+  group_by(variety) %>%
+  summarize(Average = mean(points))
+Top10_winerank
+```
+
+# -----------------------------------------------------------------------------
+# What wine was reviewed most frequently?
+# -----------------------------------------------------------------------------
+
+```{r}
+winefreq <- wine %>%
+  group_by(variety) %>%
+  summarize(count = n()) %>%
+  arrange(desc(count))
+winefreq
+top_n(winefreq, 10)
+```
+
+# -----------------------------------------------------------------------------
+# Use the filter() function to select wines grown in California. Assign the 
+# output to the data frame ca_wine_reviews 
+# -----------------------------------------------------------------------------
+```{r}
+ca_wine_reviews <- wine %>%
+  filter(province == "California")%>%
+  group_by(variety) %>%
+  summarize(Average = mean(points))%>%
+  arrange(desc(Average))
+ca_wine_reviews 
+```
+
+# -----------------------------------------------------------------------------
+# Now you know what wines are grown in California, but what are the most
+# popular varities? Use the group_by() and summarize() functions to collapse 
+# the ca_wine_reviews data frame and count the total number of wines grown 
+# for each variety. Assign the output to the data frame ca_popular_wines 
+# -----------------------------------------------------------------------------
+```{r}
+ca_popular_wines <- wine %>% 
+  group_by(variety) %>% 
+  summarize(count = n()) %>%
+  arrange(desc(count))
+ca_popular_wines
+```
+# -----------------------------------------------------------------------------
+# We nearly have the answer to the question we're interested in 
+# answering, what are the most popular varities in California? Use the 
+# arrange() and slice() functions to return a data frame containing the 
+# 10 most popular wines grown in Califonia. Asign the output to 
+# ca_top_10. 
+# -----------------------------------------------------------------------------
+```{r}
+ca_top_10 <- wine %>%
+  filter(province == "California") %>%
+  group_by(variety) %>%
+  summarize(Average = mean(points))%>%
+  arrange(desc(Average))
+ca_top_10 
+top_n(ca_top_10 , 10)
+```
+# Note: You might notice that the wines are not properly categorized. 
+# We should consider a better procedure for grouping wine vareties in 
+# the future. 
+
+# Note: Notice this group of functions could easily answer many of 
+# the questions we're interested in (e.g., what regions produce the best 
+# wine? What wines is California best known for?) 
+
+# -----------------------------------------------------------------------------
+# Lets group vines by variety see if there's a relationship between 
+# points and price 
+# -----------------------------------------------------------------------------
+
+Break down the wine market in California. What are the most popular wines grown in California? What regions/wineries in California produce the best wine? Are they close together? Do they grow the same varieties? 
+
+
+
+What’s the distribution of wine prices in California? Is it skewed? Bimodal? What does this say about the typical wine consumer?
+
+
+On average do California score better than wine from countries like France, Spain, and Italy? How about domestically, how do California wines stack up against the United States? 
