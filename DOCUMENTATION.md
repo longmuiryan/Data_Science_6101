@@ -1,6 +1,6 @@
 ## Documentation 
 
-### grape_wine_classification.R
+### grape_style_classification.R
 
 - cleans data for analysis, creates style and grape variables. 
 
