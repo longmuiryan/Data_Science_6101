@@ -1,14 +1,13 @@
-<<<<<<< HEAD
+
 .Rproj.user
 .Rhistory
 .DS_Store
 .Rproj
 
-=======
+
 # History files
 .Rhistory
 .Rapp.history
->>>>>>> ad4ef9b0ca5c21e40d1e849dc1d96eb631a36752
 
 # Session Data files
 .RData
