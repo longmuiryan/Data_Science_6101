@@ -51,7 +51,9 @@ ca_wine_reviews <- raw_wine_reviews %>%
 
 ca_popular_wines <- ca_wine_reviews %>% 
   group_by(variety) %>% 
-  summarize(count = n())
+  filter(str_detect(variety, "style")) %>% 
+  summarize(count = n()) %>% 
+  arrange(desc(count)) 
 
 # -----------------------------------------------------------------------------
 # We nearly have the answer to the question we're interested in 
@@ -79,7 +81,7 @@ ca_top_10 <- ca_popular_wines %>%
 # -----------------------------------------------------------------------------
 
 
-print("add this line")
+
   
   
   
