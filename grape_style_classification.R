@@ -72,6 +72,17 @@ for(i in grapes){
 }
 
 # -----------------------------------------------------------------------------
+# How well did we do? What proportion of observations were we able to 
+# identify style and grape? 
+# -----------------------------------------------------------------------------
+  
+# yikes 
+nrow(ca_wine_reviews %>% filter(!is.na(grape))) / nrow(ca_wine_reviews)
+
+# rep("yikes", 2)
+nrow(ca_wine_reviews %>% filter(!is.na(style))) / nrow(ca_wine_reviews)
+
+# -----------------------------------------------------------------------------
 # Export Data 
 # -----------------------------------------------------------------------------
 
