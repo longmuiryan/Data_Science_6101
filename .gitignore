@@ -2,6 +2,7 @@
 .Rproj.user
 .Rhistory
 .DS_Store
+.Rproj
 
 =======
 # History files
@@ -44,3 +45,6 @@ vignettes/*.pdf
 
 # R Environment Variables
 .Renviron
+
+
+
