@@ -17,5 +17,3 @@
 - March 11, Presentation 1
 - April 15, Quiz 2
 - April 22, Presentation 2 
-
-
