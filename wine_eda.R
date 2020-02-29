@@ -17,7 +17,7 @@ library(kableExtra)
 # Data Section  
 #  Objectives: load in the data 
 # =============================================================================
-
+ 
 raw_wine_reviews <- read.csv("winemag-data-130k-v2.csv")
 
 # =============================================================================
