@@ -3,7 +3,7 @@
 # Wine EDA 
 # =============================================================================
 
-setwd("~/Desktop/Data Science/Data/Wine")
+
 
 # -----------------------------------------------------------------------------
 # Packages
@@ -84,11 +84,37 @@ wine_production <- wine_reviews %>%
 # Italy in our sample. Could this a point of bias? 
 # -----------------------------------------------------------------------------
 
-# -----------------------------------------------------------------------------
-# 
-# 
-# -----------------------------------------------------------------------------
+# =======================================================================
+# Calfornia wine production 
+# ========================================================================
 
+ca_counties <- read.csv("~/Desktop/Git/edwinbet/california_county_list.csv") %>% 
+  setNames("county")
+
+ca_wine_reviews <- raw_wine_reviews %>% 
+  filter(province == "California") %>% 
+  group_by(region_1) %>% 
+  summarise(count = n()) %>% 
+  arrange(desc(count))
+
+ca_wine_reviews <- raw_wine_reviews %>% 
+  filter(province == "California") %>% 
+  mutate(county = case_when(
+    region_1 %in% c("Napa Valley") ~ "Napa",
+    region_1 %in% c("Sonoma", "Russian River Valley",
+      "Sonoma Coast", "Sonoma County", "Carneros", 
+      "Dry Creek Valley") ~ "Sonoma",
+    region_1 %in% c("Santa Barbara County",
+      "Sta. Rita Hills") ~ "Santa Barbara",
+    region_1 %in% c("San Luis Obispo",
+      "Paso Robles") ~ "San Luis Obispo" )) %>%
+  filter(!is.na(county))
+
+ca_wine_prod <- ca_wine_reviews %>% 
+  group_by(county) %>% 
+  summarise(count = n()) %>% 
+  right_join(ca_counties, by = "county") %>% 
+  write_csv("production_by_county.csv")
 
 
 
