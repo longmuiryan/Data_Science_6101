@@ -10,25 +10,16 @@
 
 1. Development of a **research driven question (SMART)** focused on a dataset either inside of R or one of your choosing from any online sources. 
 
-###Project Goals - R Markdown 
+### Project Goals - R Markdown 
 
 1. Summary of the dataset
-
-   https://www.kaggle.com/zynicide/wine-reviews
-
 2. Descriptive Statistics
-
 3. Graphical representations of the data
-
 4. [When applicable] Measures of Variance / sd
-
 5. [When applicable] Normality tests
-
 6. [When applicable] Initial correlation / Chi Square tests / ANOVA analysis / Z-test or Z-interval / T-test or T-interval etc.
 
 ### Project Goals - Paper 
-
-https://www.kaggle.com/zynicide/wine-reviews
 
 1. What do we know about this dataset?
 2. What are the limitations of the dataset?
