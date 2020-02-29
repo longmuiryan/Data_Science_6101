@@ -9,80 +9,98 @@ setwd("~/Desktop/Data Science/Data/Wine")
 # Packages
 # -----------------------------------------------------------------------------
 
-library(dplyr)
-library(ggplot2)
+library(tidyverse)
 library(kableExtra)
 
 # =============================================================================
 # Data Section  
-#  Objectives: load in the data 
 # =============================================================================
 
 raw_wine_reviews <- read.csv("winemag-data-130k-v2.csv")
 
 # =============================================================================
 # EDA Section 
-#  Objectives: Learn about California wine country 
+#   We're going to start wide and narrow towards California 
 # =============================================================================
 
 # -----------------------------------------------------------------------------
-# Lets start off easy. Click on the dataframe in the global working 
-# enviroment and get an idea of what you're working with. Alternatively 
-# you can use functions like head(), summary(), and glipse() to do the 
-# same thing
+# Lets 'glimpse' the data and see what we're working with 
 # -----------------------------------------------------------------------------
 
 glimpse(raw_wine_reviews)
 
-# -----------------------------------------------------------------------------
-# Use the filter() function to select wines grown in California. Assign the 
-# output to the data frame ca_wine_reviews 
-# -----------------------------------------------------------------------------
+# =============================================================================
+# Who makes the most >80pt wine? 
+# =============================================================================
 
-ca_wine_reviews <- raw_wine_reviews %>%
-  filter(province == "California")
-
-# -----------------------------------------------------------------------------
-# Now you know what wines are grown in California, but what are the most
-# popular varities? Use the group_by() and summarize() functions to collapse 
-# the ca_wine_reviews data frame and count the total number of wines grown 
-# for each variety. Assign the output to the data frame ca_popular_wines 
-# -----------------------------------------------------------------------------
-
-ca_popular_wines <- ca_wine_reviews %>% 
-  group_by(variety) %>% 
-  filter(str_detect(variety, "style")) %>% 
-  summarize(count = n()) %>% 
-  arrange(desc(count)) 
+wine_production<- raw_wine_reviews %>%
+  group_by(province) %>% 
+  summarise(count = n()) %>% 
+  arrange(desc(count))
 
 # -----------------------------------------------------------------------------
-# We nearly have the answer to the question we're interested in 
-# answering, what are the most popular varities in Califorrnia? Use the 
-# arrange() and slice() functions to return a data frame containing the 
-# 10 most popular wines grown in Califonia. Asign the output to 
-# ca_top_10. 
+# Issue: We're interested studying wine markets on a broad scale, however, the
+# province variable is more specific than we'd like it to be. 
+# Objectice: Italy, Spain, France and the United States are among the top wine 
+# producing countries in the world. Properly classify wines produces in these 
+# countries. 
+# Source: https://en.wikipedia.org/wiki/List_of_wine-producing_regions
 # -----------------------------------------------------------------------------
 
-ca_top_10 <- ca_popular_wines %>% 
-  arrange(desc(count)) %>%
-  slice(c(1:10)) 
+# Regions 
+france.v <- c("Bordeaux", "Burgundy", "Alsace", "Loire Valley", "Champagne",
+  "Southwest France", "Provence", "Rhône Valley", "Beaujolais", "France Other")
+italy.v <- c("Tuscany", "Veneto", "Northeastern Italy", "Sicily & Sardinia", 
+  "Southern Italy", "Central Italy", "Catalonia", "Italy Other")
+spain.v <- c("Northern Spain", "Douro", "Spain Other")
+states.v <- c("California", "Washington", "Oregon", "Piedmont", "New York",
+  "Virginia") 
 
-# Note: You might notice that the wines are not properly categorized. 
-# We should consider a better procedure for grouping wine vareties in 
-# the future. 
-
-# Note: Notice this group of functions could easily answer many of 
-# the questions we're interested in (e.g., what regions produce the best 
-# wine? What wines is California best known for?) 
+# Classificaiton 
+wine_reviews <- raw_wine_reviews %>% 
+  mutate(country = case_when(
+    province %in% states.v ~ "United States", 
+    province %in% france.v ~ "France",
+    province %in% italy.v ~ "Italy",
+    province %in% spain.v ~ "Spain" )) %>%
+  filter(!is.na(country))
 
 # -----------------------------------------------------------------------------
-# Lets group vines by variety see if there's a relationship between 
-# points and price 
+# We fucking did it! By categorizing the top 30 out of the total 426 wine producing
+# regions reviewed in Wine Enthusiast we we're able to properaly classify roughly 
+# 80% of all the wines reviewed. 
+# 
+# Lets go back and try and answer our previous question 
+# -----------------------------------------------------------------------------
+
+wine_production <- wine_reviews %>% 
+  group_by(country) %>% 
+  summarise(count = n()) %>% 
+  arrange(desc(count))
+
+# -----------------------------------------------------------------------------
+# Pretty nuts. Althought Wikipedia says Italy produces more than 25% more wine 
+# than the U.S., The U.S. has more than 5 times as many wines reviewed than 
+# Italy in our sample. Could this a point of bias? 
+# -----------------------------------------------------------------------------
+
+# -----------------------------------------------------------------------------
+# 
+# 
 # -----------------------------------------------------------------------------
 
 
 
-  
-  
-  
+
+
+
+
+
+
+
+
+
+
+
+
 
