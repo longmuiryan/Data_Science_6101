@@ -32,7 +32,6 @@ wine_box <- function(dataframe, variable, title = NULL){
   return(p1)
 }
 
-
 wine_hist <- function(dataframe, variable, title = NULL, ...){
   variable <- enquo(variable)
   p1 <- ggplot(dataframe, aes(x = !! variable)) +
