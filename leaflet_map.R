@@ -11,7 +11,7 @@ setwd("~/Desktop/Git/edwinbet")
 
 library(tidyverse)
 library(geojsonio)
-
+library(leaflet)
 
 # =============================================================================
 # Data Cleaning 
@@ -19,27 +19,6 @@ library(geojsonio)
 
 # Raw data 
 raw_wine_reviews <- read.csv("data/winemag-data-130k-v2.csv")
-
-# -----------------------------------------------------------------------------
-# Classify region 
-# -----------------------------------------------------------------------------
-
-# Regions 
-france.v <- c("Bordeaux", "Burgundy", "Alsace", "Loire Valley", "Champagne",
-              "Southwest France", "Provence", "Rhône Valley", "Beaujolais", "France Other")
-italy.v <- c("Tuscany", "Veneto", "Northeastern Italy", "Sicily & Sardinia", 
-             "Southern Italy", "Central Italy", "Catalonia", "Italy Other")
-spain.v <- c("Northern Spain", "Douro", "Spain Other")
-states.v <- c("California", "Washington", "Oregon", "Piedmont", "New York",
-              "Virginia") 
-
-wine_reviews <- raw_wine_reviews %>% 
-  mutate(country = case_when(
-    province %in% states.v ~ "United States", 
-    province %in% france.v ~ "France",
-    province %in% italy.v ~ "Italy",
-    province %in% spain.v ~ "Spain" )) %>%
-  filter(!is.na(country))
 
 # -----------------------------------------------------------------------------
 # Classify California county 
@@ -66,11 +45,11 @@ ca_wine_reviews <- raw_wine_reviews %>%
 # -----------------------------------------------------------------------------
 
 # Grab the geojson & json 
-ca_geojson <- geojsonio::geojson_read("california-counties-2012.geojson", what = "sp")
+ca_geojson <- geojsonio::geojson_read("json/california-counties-2012.geojson", what = "sp")
 ca_topo <- readLines("json/california_topography.json") %>% paste(collapse = "\n")
 
 # Grab the counties from the geojson
-ca_counties <- tibble(california_counties$name) %>% setNames("county")
+ca_counties <- tibble(ca_geojson$name) %>% setNames("county")
 
 # Merge in w/ wine reviews 
 ca_county_count <- ca_wine_reviews %>% 
@@ -104,3 +83,7 @@ wine_heat <- function(location, count, topo, geojson){
 # -----------------------------------------------------------------------------
 
 wine_heat(ca_county_count$county, ca_county_count$count, ca_topo, ca_geojson)
+
+
+
+

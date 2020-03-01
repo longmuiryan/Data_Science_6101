@@ -48,3 +48,5 @@ wine_hist <- function(dataframe, variable, title = NULL, ...){
 #  wine <- read.csv("data/winemag-data-130k-v2.csv")
 #  wine_box(wine, price)
 #  wine_hist(wine, points, bins = 20)
+
+
