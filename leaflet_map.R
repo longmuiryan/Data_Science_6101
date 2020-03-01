@@ -11,6 +11,7 @@ setwd("~/Desktop/Git/edwinbet")
 
 library(tidyverse)
 library(geojsonio)
+library(leaflet)
 
 
 # =============================================================================
@@ -66,11 +67,11 @@ ca_wine_reviews <- raw_wine_reviews %>%
 # -----------------------------------------------------------------------------
 
 # Grab the geojson & json 
-ca_geojson <- geojsonio::geojson_read("california-counties-2012.geojson", what = "sp")
+ca_geojson <- geojsonio::geojson_read("json/california-counties-2012.geojson", what = "sp")
 ca_topo <- readLines("json/california_topography.json") %>% paste(collapse = "\n")
 
 # Grab the counties from the geojson
-ca_counties <- tibble(california_counties$name) %>% setNames("county")
+ca_counties <- tibble(ca_geojson$name) %>% setNames("county")
 
 # Merge in w/ wine reviews 
 ca_county_count <- ca_wine_reviews %>% 
