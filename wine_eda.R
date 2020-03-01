@@ -110,9 +110,11 @@ ca_wine_reviews <- raw_wine_reviews %>%
       "Paso Robles") ~ "San Luis Obispo" )) %>%
   filter(!is.na(county))
 
+
+setwd("~/Desktop/Git/edwinbet/data")
 ca_wine_prod <- ca_wine_reviews %>% 
   group_by(county) %>% 
-  summarise(count = n()) %>% 
+  summarise(count = n()) %>%
   right_join(ca_counties, by = "county") %>% 
   write_csv("production_by_county.csv")
 
