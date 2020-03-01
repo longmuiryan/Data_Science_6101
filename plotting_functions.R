@@ -49,3 +49,8 @@ wine <- read.csv("data/winemag-data-130k-v2.csv")
 # wine_hist(wine, points, bins = 30)
 # wine_box(wine, points)
 # wine_qq(wine, points)
+
+
+
+
+
