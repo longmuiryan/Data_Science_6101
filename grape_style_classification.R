@@ -145,7 +145,7 @@ sonoma <- c("Sonoma", "Russian River Valley", "Sonoma Coast", "Sonoma County",
 santa_barbara <- c("Santa Barbara County", "Sta. Rita Hills")
 san_luis_obispo <- c("San Luis Obispo", "Paso Robles")
 
-ca_wine_reviews <- ca_wine_reviews %>% 
+ca_wine_reviews <- raw_wine_reviews %>% 
   filter(province == "California") %>% 
   mutate(county = case_when(
     region_1 %in% napa ~ "Napa",
@@ -154,7 +154,6 @@ ca_wine_reviews <- ca_wine_reviews %>%
     region_1 %in% san_luis_obispo ~ "San Luis Obispo" ))
 
 
-update the master 
 
  
 
