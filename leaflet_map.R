@@ -97,6 +97,7 @@ wine_heat <- function(location, count, topo, geojson){
   pal <- colorNumeric(colors, NULL, reverse = F)
   
   heat_map <- leaflet(geojson) %>%
+    # flyTo(lng=-119.4179, lat=36.783, zoom = 5) %>%
     addTiles() %>%
     addProviderTiles(providers$CartoDB.Positron) %>%
     addPolygons(stroke = FALSE, smoothFactor = 0.3, fillOpacity = 0.8,
