@@ -1,51 +1,80 @@
 
+# =============================================================================
+# Categorization Problems 
+#   The raw data from Kaggle is missing key variables neccesary for analysis
+#   (e.g., country, county, grape, style, and year). This script aims to create 
+#   some of these variables 
+# 
+# Sections:
+#   1.Year
+#   2.California styles & grapes 
+#   3.California counties
+# 
+# Note:
+#   All the steps are performed seperately and the data isn't exported to a 
+#   dataset. Haven't figured out how to fit them together. 
+# =============================================================================
 
-# =============================================================================
-# Style & Group Categorization 
-#   Objectives: Create grape and style variables using the variety variable. 
-# =============================================================================
+# Set working directory to the top of the repo 
+setwd("~/Desktop/Git/edwinbet")
 
 # -----------------------------------------------------------------------------
 # Packages
 # -----------------------------------------------------------------------------
 
-library(dplyr)
-library(stringr)
-
-setwd("~/Desktop/Git/edwinbet")
+library(tidyverse)
 
 # ----------------------------------------------------------------------------
 # Data 
 # ----------------------------------------------------------------------------
 
-raw_wine_reviews <- read.csv("winemag-data-130k-v2.csv") 
+raw_wine_reviews <- read.csv("data/winemag-data-130k-v2.csv") 
 
-ca_wine_reviews <- raw_wine_reviews %>%
+# =============================================================================
+# 1. Time Classification 
+#   Objectives: Create year variable using the title of the wine 
+# =============================================================================
+
+numextract <- function(string){ 
+  str_extract(string, "\\-*\\d+\\.*\\d*")
+} 
+
+wine_reviews <- raw_wine_reviews %>% 
+  mutate(year = numextract(title))
+
+# -----------------------------------------------------------------------------
+# Export data 
+# -----------------------------------------------------------------------------
+
+# setwd("~/Desktop/Git/edwinbet")
+# write_csv()
+
+# =============================================================================
+# Style & Grape
+#   Objectives: Create grape and style variables using the variety variable. 
+# =============================================================================
+
+# ----------------------------------------------------------------------------
+# We're going to identify the predominant styles and grapes. Look at the 50 
+# most common wines produced in California and sort them into the grapes.v and 
+# styles.v vectors. 
+# ----------------------------------------------------------------------------
+
+ca_top_wines <- raw_wine_reviews %>% 
   filter(province == "California") %>% 
-  mutate_if(is.factor, as.character)
-
-# ----------------------------------------------------------------------------
-# If we're going to identify the prodinent styles and grapes we need
-# to take another glance of the data. Look at the 50 most common wines produced
-# in California and add the grape and style to the hard codes section. 
-# ----------------------------------------------------------------------------
-
-ca_top_wines <- ca_wine_reviews %>% 
   group_by(variety) %>% 
   summarise(count = n()) %>% 
   arrange(desc(count)) %>% 
   slice(1:50)
 
-# lets get rid of it when we're done 
-rm("ca_top_wines")
-
 # ----------------------------------------------------------------------------
-# Hardcodes 
+# Sort the varieties into styles and grapes, starting with the most common 
+# varieties. 
 # ----------------------------------------------------------------------------
 
-styles <- c("Bordeaux", "Rhône")
+styles.v <- c("Bordeaux", "Rhône")
 
-grapes <- c("Cabernet Sauvignon", "Chardonnay", "Merlot", "Pinot noir",
+grapes.v <- c("Cabernet Sauvignon", "Chardonnay", "Merlot", "Pinot noir",
   "Sauvignon blanc", "Syrah","Zinfandel")
 
 # ----------------------------------------------------------------------------
@@ -60,13 +89,13 @@ ca_wine_reviews <- ca_wine_reviews %>%
   mutate(style = ifelse(str_detect(variety, "Bordeaux"), "Bordeaux", NA))
 
 # iterate over styles 
-for(i in styles){
+for(i in styles.v){
 ca_wine_reviews <- ca_wine_reviews %>% 
   mutate(style = ifelse(str_detect(variety, i), i, NA))
 }
 
 # iterate over grapes 
-for(i in grapes){
+for(i in grapes.v){
   ca_wine_reviews <- ca_wine_reviews %>% 
     mutate(grape = ifelse(str_detect(variety, i), i, NA))
 }
@@ -76,20 +105,91 @@ for(i in grapes){
 # identify style and grape? 
 # -----------------------------------------------------------------------------
   
-# yikes 
+# grapes 
 nrow(ca_wine_reviews %>% filter(!is.na(grape))) / nrow(ca_wine_reviews)
 
-# rep("yikes", 2)
+# styles 
 nrow(ca_wine_reviews %>% filter(!is.na(style))) / nrow(ca_wine_reviews)
 
 # -----------------------------------------------------------------------------
-# Export Data 
+# Export data 
 # -----------------------------------------------------------------------------
 
-write.csv(ca_wine_reviews, "ca_wine_reviews.csv")
+# write.csv(ca_wine_reviews, "ca_wine_reviews.csv")
 
+# =============================================================================
+# California County
+#   Objectives: Create count variables using the region variables. 
+# =============================================================================
 
+# -----------------------------------------------------------------------------
+# What counties produce the most wine? 
+# -----------------------------------------------------------------------------
 
+top_county <- raw_wine_reviews %>% 
+  filter(province == "California") %>% 
+  group_by(region_1) %>% 
+  summarise(count = n()) %>% 
+  arrange(desc(count)) %>% 
+  slice(1:50)
+
+# -----------------------------------------------------------------------------
+# Sort the regions into counties, starting with those that make this most 
+# wine.
+# -----------------------------------------------------------------------------
+
+# Counties 
+
+# County list obtained through searching for regions in Wikipedia and assigning
+# to a county in the list.
+
+# List of regions in >1 county (county that came first on wikipedia selected)
+  # Central Coast, Santa Maria Valley, Santa Cruz Mountains, North Coast
+  # Shenandoah Valley (CA)
+
+county_list <- list(
+                  napa <- c("Napa Valley", "Rutherford", "Oakville",
+                            "St. Helena", "Howell Mountain", "Mount Veeder",
+                            "Stags Leap District", "Diamond Mountain District",
+                            "Calistoga", "Spring Mountain District", "Oak Knoll District"),
+                  sonoma <- c("Sonoma", "Russian River Valley", "Sonoma Coast", 
+                              "Sonoma County", "Carneros", "Dry Creek Valley", 
+                              "Alexander Valley", "Sonoma Valley", "Green Valley",
+                              "Sonoma Mountain", "Knights Valley"),
+                  santa_barbara <- c("Santa Barbara County", "Sta. Rita Hills", "Happy Canyon of Santa Barbara"),
+                  san_luis_obispo <- c("San Luis Obispo", "Paso Robles", "Edna Valley",
+                                       "Arroyo Grande Valley", "San Luis Obispo County", "Adelaida District"),
+                  monterey <- c("Santa Lucia Highlands", "Monterey", "Monterey County",
+                                "Arroyo Seco"),
+                  san_joaquin <- c("Lodi"),
+                  contra_coast <- c("Central Coast"),
+                  mendocino <- c("Anderson Valley", "Mendocino County", "Mendocino"),
+                  santa_clara <- c("Santa Cruz Mountains"),
+                  alameda <- c("Livermore Valley"),
+                  amador <- c("Sierra Foothills", "Amador County", "Shenandoah Valley (CA)"),
+                  lake <- c("North Coast", "Lake County"),
+                  el_dorado <- c("El Dorado"),
+                  riverside <- c("Temecula Valley"))
+
+ca_wine_reviews <- raw_wine_reviews %>% 
+  filter(province == "California") %>% 
+  mutate(county = case_when(
+    region_1 %in% county_list[[1]] ~ "Napa",
+    region_1 %in% county_list[[2]] ~ "Sonoma",
+    region_1 %in% county_list[[3]] ~ "Santa Barbara",
+    region_1 %in% county_list[[4]] ~ "San Luis Obispo",
+    region_1 %in% county_list[[5]] ~ "Monterey",
+    region_1 %in% county_list[[6]] ~ "San Joaquin",
+    region_1 %in% county_list[[7]] ~ "Contra Coast",
+    region_1 %in% county_list[[8]] ~ "Mendocino",
+    region_1 %in% county_list[[9]] ~ "Santa Clara",
+    region_1 %in% county_list[[10]] ~ "Alameda",
+    region_1 %in% county_list[[11]] ~ "Amador",
+    region_1 %in% county_list[[12]] ~ "Lake",
+    region_1 %in% county_list[[13]] ~ "El Dorado",
+    region_1 %in% county_list[[14]] ~ "Riverside"))
+
+ 
 
 
 
