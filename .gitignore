@@ -1,3 +1,11 @@
+bpi.dev2
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+
+
+master
 .DS_Store
 .Rproj
 # History files

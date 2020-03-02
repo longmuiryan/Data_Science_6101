@@ -15,8 +15,13 @@ source("plotting_functions.R")
 # =============================================================================
 # Data Section  
 # =============================================================================
+bpi.dev2
+ 
+raw_wine_reviews <- read.csv("winemag-data-130k-v2.csv")
+=======
 
 raw_wine_reviews <- read.csv("data/winemag-data-130k-v2.csv")
+master
 
 # =============================================================================
 # 1. Summary of the dataset  
