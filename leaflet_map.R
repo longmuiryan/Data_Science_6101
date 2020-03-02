@@ -25,19 +25,47 @@ raw_wine_reviews <- read.csv("data/winemag-data-130k-v2.csv")
 # -----------------------------------------------------------------------------
 
 # Counties 
-napa <- c("Napa Valley")
-sonoma <- c("Sonoma", "Russian River Valley", "Sonoma Coast", "Sonoma County", 
-  "Carneros", "Dry Creek Valley")
-santa_barbara <- c("Santa Barbara County", "Sta. Rita Hills")
-san_luis_obispo <- c("San Luis Obispo", "Paso Robles")
+county_list <- list(
+  napa <- c("Napa Valley", "Rutherford", "Oakville",
+            "St. Helena", "Howell Mountain", "Mount Veeder",
+            "Stags Leap District", "Diamond Mountain District",
+            "Calistoga", "Spring Mountain District", "Oak Knoll District"),
+  sonoma <- c("Sonoma", "Russian River Valley", "Sonoma Coast", 
+              "Sonoma County", "Carneros", "Dry Creek Valley", 
+              "Alexander Valley", "Sonoma Valley", "Green Valley",
+              "Sonoma Mountain", "Knights Valley"),
+  santa_barbara <- c("Santa Barbara County", "Sta. Rita Hills", "Happy Canyon of Santa Barbara"),
+  san_luis_obispo <- c("San Luis Obispo", "Paso Robles", "Edna Valley",
+                       "Arroyo Grande Valley", "San Luis Obispo County", "Adelaida District"),
+  monterey <- c("Santa Lucia Highlands", "Monterey", "Monterey County",
+                "Arroyo Seco"),
+  san_joaquin <- c("Lodi"),
+  contra_coast <- c("Central Coast"),
+  mendocino <- c("Anderson Valley", "Mendocino County", "Mendocino"),
+  santa_clara <- c("Santa Cruz Mountains"),
+  alameda <- c("Livermore Valley"),
+  amador <- c("Sierra Foothills", "Amador County", "Shenandoah Valley (CA)"),
+  lake <- c("North Coast", "Lake County"),
+  el_dorado <- c("El Dorado"),
+  riverside <- c("Temecula Valley"))
 
 ca_wine_reviews <- raw_wine_reviews %>% 
   filter(province == "California") %>% 
   mutate(county = case_when(
-    region_1 %in% napa ~ "Napa",
-    region_1 %in% sonoma ~ "Sonoma",
-    region_1 %in% santa_barbara ~ "Santa Barbara",
-    region_1 %in% san_luis_obispo ~ "San Luis Obispo" )) %>%
+    region_1 %in% county_list[napa] ~ "Napa",
+    region_1 %in% county_list[sonoma] ~ "Sonoma",
+    region_1 %in% county_list[santa_barbara] ~ "Santa Barbara",
+    region_1 %in% county_list[san_luis_obispo] ~ "San Luis Obispo",
+    region_1 %in% county_list[monterey] ~ "Monterey",
+    region_1 %in% county_list[san_joaquin] ~ "San Joaquin",
+    region_1 %in% county_list[contra_coast] ~ "Contra Coast",
+    region_1 %in% county_list[mendocino] ~ "Mendocino",
+    region_1 %in% county_list[santa_clara] ~ "Santa Clara",
+    region_1 %in% county_list[alameda] ~ "Alameda",
+    region_1 %in% county_list[amador] ~ "Amador",
+    region_1 %in% county_list[lake] ~ "Lake",
+    region_1 %in% county_list[el_dorado] ~ "El Dorado",
+    region_1 %in% county_list[riverside] ~ "Riverside")) %>%
   filter(!is.na(county))
 
 # -----------------------------------------------------------------------------
