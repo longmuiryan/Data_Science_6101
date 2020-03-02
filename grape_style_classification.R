@@ -174,20 +174,20 @@ county_list <- list(
 ca_wine_reviews <- raw_wine_reviews %>% 
   filter(province == "California") %>% 
   mutate(county = case_when(
-    region_1 %in% county_list[napa] ~ "Napa",
-    region_1 %in% county_list[sonoma] ~ "Sonoma",
-    region_1 %in% county_list[santa_barbara] ~ "Santa Barbara",
-    region_1 %in% county_list[san_luis_obispo] ~ "San Luis Obispo",
-    region_1 %in% county_list[monterey] ~ "Monterey",
-    region_1 %in% county_list[san_joaquin] ~ "San Joaquin",
-    region_1 %in% county_list[contra_coast] ~ "Contra Coast",
-    region_1 %in% county_list[mendocino] ~ "Mendocino",
-    region_1 %in% county_list[santa_clara] ~ "Santa Clara",
-    region_1 %in% county_list[alameda] ~ "Alameda",
-    region_1 %in% county_list[amador] ~ "Amador",
-    region_1 %in% county_list[lake] ~ "Lake",
-    region_1 %in% county_list[el_dorado] ~ "El Dorado",
-    region_1 %in% county_list[riverside] ~ "Riverside"))
+    region_1 %in% county_list[[1]] ~ "Napa",
+    region_1 %in% county_list[[2]] ~ "Sonoma",
+    region_1 %in% county_list[[3]] ~ "Santa Barbara",
+    region_1 %in% county_list[[4]] ~ "San Luis Obispo",
+    region_1 %in% county_list[[5]] ~ "Monterey",
+    region_1 %in% county_list[[6]] ~ "San Joaquin",
+    region_1 %in% county_list[[7]] ~ "Contra Coast",
+    region_1 %in% county_list[[8]] ~ "Mendocino",
+    region_1 %in% county_list[[9]] ~ "Santa Clara",
+    region_1 %in% county_list[[10]] ~ "Alameda",
+    region_1 %in% county_list[[11]] ~ "Amador",
+    region_1 %in% county_list[[12]] ~ "Lake",
+    region_1 %in% county_list[[13]] ~ "El Dorado",
+    region_1 %in% county_list[[14]] ~ "Riverside"))
 
  
 
