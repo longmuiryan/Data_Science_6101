@@ -116,4 +116,3 @@ wine_heat(ca_county_count$county, ca_county_count$count, ca_topo, ca_geojson)
 
 
 
-
