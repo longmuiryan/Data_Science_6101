@@ -83,8 +83,8 @@ ca_counties <- tibble(ca_geojson$name) %>% setNames("county")
 ca_county_count <- ca_wine_reviews %>% 
   group_by(county) %>% 
   summarise(count = n()) %>%
-  right_join(ca_counties, by = "county") %>% 
-  mutate(count = ifelse(is.na(count), 0, count))
+  right_join(ca_counties, by = "county")
+  # mutate(count = ifelse(is.na(count), 0, count))
 
 # -----------------------------------------------------------------------------
 # Mapping function 
