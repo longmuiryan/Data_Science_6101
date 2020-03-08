@@ -1,0 +1,178 @@
+---
+title: "Kaggle Wine EDA"
+author: "by Data Wine'ing"
+date: "3/5/2020"
+output:
+  html_document:
+    code_folding: hide
+    # number_sections: true
+    toc: yes
+    toc_depth: 3
+    toc_float: yes
+  pdf_document:
+    toc: yes
+    toc_depth: '3'
+---
+
+```{r Preample, include = F}
+
+# knitr settings 
+knitr::opts_chunk$set(fig.width = 12, fig.height = 4,
+  warning=FALSE, message=FALSE, echo = FALSE)
+
+# set working directory 
+setwd("~/Desktop/Git/edwinbet")
+
+# load packages 
+library(tidyverse)
+library(gridExtra)
+
+# source files 
+# source("leaflet_map.R")
+source("plotting_functions.R")
+```
+## 0. Raw Data 
+***
+
+```{r Data, include = F}
+raw_wine_reviews <- read.csv("data/winemag-data-130k-v2.csv")
+```
+
+### Data at a glance 
+```{r Glimpse, echo = F}
+glimpse(raw_wine_reviews)
+```
+
+
+##  1. Descriptive Statistic: Global Perspective 
+***
+
+```{r Descriptive statistics}
+# Creat year variable 
+wine_reviews <- raw_wine_reviews %>% 
+  mutate(year = as.numeric(str_extract(title, "\\-*\\d+\\.*\\d*"))) %>% 
+  mutate(year = ifelse(year > 1950 & year < 2017, year, NA))
+
+# Summary statistics of  year, points, and price 
+wine_reviews %>% 
+  select(year, points, price) %>% 
+  summary()
+```
+
+
+## 2. Graphical Representation of Data & Normality Tests 
+***
+
+## {.tabset .tabset-fade}
+
+### Price 
+```{r Normality tests I }
+price_box <- wine_reviews %>% wine_box(price, "Price")
+price_qq <- wine_reviews %>% wine_qq(price, "Points")
+price_hist <- wine_reviews %>% wine_hist(price, "Price", bins = 40)
+grid.arrange(price_box, price_qq, price_hist, ncol=3 )
+```
+
+### Year
+```{r Normality tests II}
+year_box <-  wine_reviews %>% wine_box(year, "Year")
+year_qq <-  wine_reviews %>% wine_qq(year, "Year")
+year_hist <-  wine_reviews %>% wine_hist(year, "Year", bins = 40)
+grid.arrange(year_box, year_qq, year_hist, ncol=3 )
+```
+
+### Points 
+```{r Normality tests III}
+points_box <- wine_reviews %>% wine_box(points, "Points")
+points_qq <- wine_reviews %>% wine_qq(points, "Points")
+points_hist <- wine_reviews %>% wine_hist(points, "Points", bins = 20)
+grid.arrange(points_box, points_qq, points_hist, ncol=3 )
+```
+
+## 
+
+
+## 3. Initial correlation / Chi Square tests / ANOVA analysis / Z-test or Z-interval / T-test or T-interval etc. 
+***
+
+## {.tabset .tabset-fade}
+
+### Price vs. points 
+
+Interpretation: Wines over \$300 dollars are typically >90pts, not suprising. However, There's a great variation in points among wines less that \$100. What counties in California produce the highest rated wines that cost less than \$50? 
+
+```{r Correlation I}
+# Scatter plot 
+wine_reviews  %>% 
+  filter(price < 500) %>% 
+  ggplot(aes(x = price, y= points)) + 
+  geom_point() +
+  geom_smooth(method = lm, se = FALSE)
+
+# Correlation points vs. price
+cor.test(wine_reviews$price, wine_reviews$points)
+```
+
+### Price vs. years 
+
+Interpretation: Not very fitted, does imply that the year a wine was produced has influence on how it's rated
+
+```{r Correlation II}
+# Scatter plot 
+wine_reviews %>% 
+  ggplot(aes(x = year, y= price)) + 
+  geom_point() +
+  geom_smooth(method = lm, se = FALSE)
+
+# Correlation 
+cor.test(wine_reviews$year, wine_reviews$points)
+```
+
+## 
+
+### Two Sample T 
+
+Interpretation: The p-value is lower than the usual threshold of 0.05. You are confident to say there is a statistical difference between the groups
+
+```{r Two sample t-test}
+# subset  
+domestic_wines <- wine_reviews %>% filter(country == "US")
+imported_wines <- wine_reviews %>% filter(country != "US")
+
+# t-test 
+t.test(domestic_wines$points, imported_wines$points)
+```
+
+
+### Anova 
+Interpretation: The p-value is lower than the usual threshold of 0.05. You are confident to say there is a statistical difference between the groups
+```{r Anova }
+# subset 
+big_wine <- wine_reviews %>% 
+  filter(country %in% c("Italy", "Spain", "France", "US")) 
+
+# anova 
+anova_results <- aov(points ~ country, data = big_wine)
+summary(anova_results) 
+```
+
+### Who makes the most >80pt wine?
+
+You'd think it might be Italy but the answer might suprise you. Source: https://en.wikipedia.org/wiki/List_of_wine-producing_regions
+
+Note: Do we think Italy makes less >80pt wine or could it be that Wine Enthusiast is more likely to review a bottle of wine from the United States? This could potentially be a point of bias in our sample. 
+
+```{r Count}
+raw_wine_reviews %>%
+  group_by(country) %>% 
+  summarise(count = n()) %>% 
+  arrange(desc(count)) %>% 
+  head(10)
+```
+
+## 4. California Analysis
+***
+
+
+
+
