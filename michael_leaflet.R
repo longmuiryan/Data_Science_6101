@@ -131,6 +131,63 @@ california_fill
 
 # Idea: Zoom in on each county and inspect the number of vineyards/wineries in each county
 
+# First, we'll need to read in the .geojson file
+ca_avas <- geojsonio::geojson_read("json/ca_avas.geojson", what = "sp")
+
+# Inspect the data
+ca_avas_tbl <- as_tibble(ca_avas)
+ca_avas_tbl
+
+# Grab list of california counties and export to .csv and give to Ryan to add quantity of wine in each county.
+ca_avas_list <- ca_avas_tbl["name"]
+write_csv(ca_avas_list, 'data/ca_avas_list.csv')
+
+ca_wine_reviews <- raw_wine_reviews %>% 
+  filter(province == "California")
+
+ca_region1 <- ca_wine_reviews$region_1
+df_region1 <- data.frame(ca_region1)
+write_csv(df_region1, 'data/ca_region1.csv')
+
+ca_region2 <- ca_wine_reviews$region_2
+df_region2 <- data.frame(ca_region2)
+write_csv(df_region2, 'data/ca_region2.csv')
+
+# Import .csv of quantity of wine/california county
+county_wine <- data.frame(read.csv("production_by_county.csv"))
+county_wine_tbl <- as_tibble(county_wine)
+county_wine_tbl
+
+# Styling
+colors <- c('#fff7f3', '#fde0dd', '#fcc5c0', '#fa9fb5', '#f768a1', '#dd3497', '#ae017e','#7a0177', '#49006a')
+pal <- colorNumeric(colors, NULL, reverse=T)
+california_topoData <- readLines("json/california_topography.json") %>% 
+  paste(collapse = "\n")
+
+# Basic California map
+# California coordinates: 36.7783° N, 119.4179° W
+
+california_avas_basic <- leaflet(ca_ava_geojson) %>%
+  setView(lng=-119.4179, lat=36.783, zoom = 5) %>%
+  addTiles() %>%
+  addProviderTiles(providers$CartoDB.Positron) %>%
+  addTopoJSON(california_topoData, weight = 1, color = "#444444", fill = FALSE) %>%
+  addPolygons(stroke = FALSE, smoothFactor = 0.3, fillOpacity = .8) 
+
+california_avas_basic
+
+# Map, with wine quantity
+california_fill <- leaflet(california_counties2) %>%
+  setView(lng=-119.4179, lat=36.783, zoom = 5) %>%
+  addTiles() %>%
+  addProviderTiles(providers$CartoDB.Positron) %>%
+  addPolygons(stroke = FALSE, smoothFactor = 0.3, fillOpacity = 0.8, 
+              fillColor = ~pal(county_wine$count),
+              label = ~paste0(county_wine$county, ": ", formatC(county_wine$count, big.mark = ",")))  %>%
+  addTopoJSON(california_topoData, weight = 1, color = "#444444", fill = FALSE) %>%
+  addLegend(pal = pal, values = county_wine$count, opacity = 1.0, title = "Quantity")
+
+california_fill
 # ==========================================================================================
 # Now let's do the same thing for France
 # Provinces geoJSON from:
@@ -209,7 +266,7 @@ italy_provinces_tbl
 
 # Grab list of france provinces and export to .csv and give to Ryan to add quantity of wine in each county.
 italy_province_list <- italy_provinces_tbl["prov_name"]
-write_csv(county_list, 'italy_province_list.csv')
+write_csv(italy_province_list, 'data/italy_province_list.csv')
 
 # Import .csv of quantity of wine/italy province
 italy_province_wine <- data.frame(read.csv(""))
