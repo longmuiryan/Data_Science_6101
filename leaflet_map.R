@@ -83,8 +83,8 @@ ca_counties <- tibble(ca_geojson$name) %>% setNames("county")
 ca_county_count <- ca_wine_reviews %>% 
   group_by(county) %>% 
   summarise(count = n()) %>%
-  right_join(ca_counties, by = "county") %>% 
-  mutate(count = ifelse(is.na(count), 0, count))
+  right_join(ca_counties, by = "county")
+  # mutate(count = ifelse(is.na(count), 0, count))
 
 # -----------------------------------------------------------------------------
 # Mapping function 
@@ -154,6 +154,7 @@ fr_wine_reviews <- raw_wine_reviews %>%
 # Prepare map data 
 # -----------------------------------------------------------------------------
 
+<<<<<<< HEAD
 # Grab the geojson & json 
 fr_geojson <- geojsonio::geojson_read("json/france_provinces.geojson", what = "sp")
 fr_topo <- readLines("json/france_topography.json") %>% paste(collapse = "\n")
@@ -178,3 +179,5 @@ wine_heat(fr_region_count$region, fr_region_count$count, fr_topo, fr_geojson)
 
   
  
+=======
+>>>>>>> 9beae7c09f5ca6cf450ceec04e7e9be321afe98b
