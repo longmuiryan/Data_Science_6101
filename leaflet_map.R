@@ -20,25 +20,25 @@ library(leaflet)
 # Raw data 
 raw_wine_reviews <- read.csv("data/winemag-data-130k-v2.csv")
 
-# -----------------------------------------------------------------------------
-# Classify California county 
-# -----------------------------------------------------------------------------
+# =============================================================================
+# California 
+# =============================================================================
 
 # Counties 
 county_list <- list(
   napa <- c("Napa Valley", "Rutherford", "Oakville",
-            "St. Helena", "Howell Mountain", "Mount Veeder",
-            "Stags Leap District", "Diamond Mountain District",
-            "Calistoga", "Spring Mountain District", "Oak Knoll District"),
+   "St. Helena", "Howell Mountain", "Mount Veeder",
+   "Stags Leap District", "Diamond Mountain District",
+   "Calistoga", "Spring Mountain District", "Oak Knoll District"),
   sonoma <- c("Sonoma", "Russian River Valley", "Sonoma Coast", 
-              "Sonoma County", "Carneros", "Dry Creek Valley", 
-              "Alexander Valley", "Sonoma Valley", "Green Valley",
-              "Sonoma Mountain", "Knights Valley"),
-  santa_barbara <- c("Santa Barbara County", "Sta. Rita Hills", "Happy Canyon of Santa Barbara"),
+   "Sonoma County", "Carneros", "Dry Creek Valley", "Alexander Valley",
+   "Sonoma Valley", "Green Valley", "Sonoma Mountain", "Knights Valley"),
+  santa_barbara <- c("Santa Barbara County", "Sta. Rita Hills",
+    "Happy Canyon of Santa Barbara"),
   san_luis_obispo <- c("San Luis Obispo", "Paso Robles", "Edna Valley",
-                       "Arroyo Grande Valley", "San Luis Obispo County", "Adelaida District"),
+    "Arroyo Grande Valley", "San Luis Obispo County", "Adelaida District"),
   monterey <- c("Santa Lucia Highlands", "Monterey", "Monterey County",
-                "Arroyo Seco"),
+    "Arroyo Seco"),
   san_joaquin <- c("Lodi"),
   contra_coast <- c("Central Coast"),
   mendocino <- c("Anderson Valley", "Mendocino County", "Mendocino"),
@@ -47,7 +47,8 @@ county_list <- list(
   amador <- c("Sierra Foothills", "Amador County", "Shenandoah Valley (CA)"),
   lake <- c("North Coast", "Lake County"),
   el_dorado <- c("El Dorado"),
-  riverside <- c("Temecula Valley"))
+  riverside <- c("Temecula Valley")
+ )
 
 ca_wine_reviews <- raw_wine_reviews %>% 
   filter(province == "California") %>% 
@@ -66,7 +67,6 @@ ca_wine_reviews <- raw_wine_reviews %>%
     region_1 %in% county_list[[12]] ~ "Lake",
     region_1 %in% county_list[[13]] ~ "El Dorado",
     region_1 %in% county_list[[14]] ~ "Riverside"))
-  # filter(!is.na(county_list))
 
 # -----------------------------------------------------------------------------
 # Prepare map data 
@@ -92,12 +92,10 @@ ca_county_count <- ca_wine_reviews %>%
 
 wine_heat <- function(location, count, topo, geojson){
   
-  colors <- c('#fff7f3', '#fde0dd', '#fcc5c0', '#fa9fb5', '#f768a1', '#dd3497',
-     '#ae017e','#7a0177', '#49006a')
+  colors <- c('#eae8e8', '#9a005d', '#830048', '#690040', '#540037')
   pal <- colorNumeric(colors, NULL, reverse = F)
   
   heat_map <- leaflet(geojson) %>%
-    # flyTo(lng=-119.4179, lat=36.783, zoom = 5) %>%
     addTiles() %>%
     addProviderTiles(providers$CartoDB.Positron) %>%
     addPolygons(stroke = FALSE, smoothFactor = 0.3, fillOpacity = 0.8,
@@ -114,6 +112,69 @@ wine_heat <- function(location, count, topo, geojson){
 
 wine_heat(ca_county_count$county, ca_county_count$count, ca_topo, ca_geojson)
 
+# =============================================================================
+# France 
+# =============================================================================
+
+# Counties 
+region_list <- list(
+  Île_de_France = list(),              
+  Centre_Val_de_Loire = list(),         
+  Bourgogne_Franche_Comté = list("Burgundy", "Beaujolais"),    
+  Normandie = list(),                  
+  Hauts_de_France = list(),          
+  Grand_Est = list("Alsace", "Champagne"),  
+  Pays_de_la_Loire  = list("Loire Valley"),
+  Bretagne = list(),                 
+  Nouvelle_Aquitaine = list("Bordeaux", "Southwest France"),       
+  Occitanie = list("Languedoc-Roussillon"),                 
+  Auvergne_Rhone_Alpes = list("Rhône Valley"),     
+  Provence_Alpes_Cote = list("Provence"), 
+  Corse = list()        
+)
+
+fr_wine_reviews <- raw_wine_reviews %>% 
+  filter(country == "France") %>% 
+  mutate(region = case_when(
+    province %in% region_list[[1]] ~ "Île-de-France",
+    province %in% region_list[[2]] ~ "Centre-Val de Loire",
+    province %in% region_list[[3]] ~ "Bourgogne-Franche-Comté",
+    province %in% region_list[[4]] ~ "Normandie",
+    province %in% region_list[[5]] ~ "Hauts-de-France",
+    province %in% region_list[[6]] ~ "Grand Est",
+    province %in% region_list[[7]] ~ "Pays de la Loire",
+    province %in% region_list[[8]] ~ "Bretagne",
+    province %in% region_list[[9]] ~ "Nouvelle-Aquitaine",
+    province %in% region_list[[10]] ~ "Occitanie",
+    province %in% region_list[[11]] ~ "Auvergne-Rhône-Alpes",
+    province %in% region_list[[12]] ~ "Provence-Alpes-Côte d'Azur",
+    province %in% region_list[[13]] ~ "Corse"))
+
+# -----------------------------------------------------------------------------
+# Prepare map data 
+# -----------------------------------------------------------------------------
+
+# Grab the geojson & json 
+fr_geojson <- geojsonio::geojson_read("json/france_provinces.geojson", what = "sp")
+fr_topo <- readLines("json/france_topography.json") %>% paste(collapse = "\n")
+
+# Grab the counties from the geojson
+fr_region <- tibble(geojson$nom) %>% setNames("region") 
+
+# Merge in w/ wine reviews 
+fr_region_count <- fr_wine_reviews %>% 
+  filter(country == "France") %>% 
+  group_by(region) %>% 
+  summarise(count = n()) %>% 
+  right_join(fr_region, by = "region") %>% 
+  mutate(count = ifelse(is.na(count), 0, count))
+
+# -----------------------------------------------------------------------------
+# Call map function 
+# -----------------------------------------------------------------------------
 
 
+wine_heat(fr_region_count$region, fr_region_count$count, fr_topo, fr_geojson)
 
+  
+ 
