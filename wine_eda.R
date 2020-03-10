@@ -10,40 +10,51 @@ setwd("~/Desktop/Git/edwinbet")
 
 library(tidyverse)
 library(gridExtra)
-source("plotting_functions.R")
+source("eda_functions.R")
 
 # =============================================================================
-# Data Section  
+# 0.0 Data Section  
 # =============================================================================
 
 raw_wine_reviews <- read.csv("data/winemag-data-130k-v2.csv")
 
-# =============================================================================
-# 1. Summary of the dataset  
-# =============================================================================
-
 # -----------------------------------------------------------------------------
-# Lets 'glimpse' the data and see what we're working with 
+# 0.1 Parse data variable 
 # -----------------------------------------------------------------------------
 
-glimpse(raw_wine_reviews)
-
-# =============================================================================
-# 2. Descriptive Statistic: Global Perspective 
-# =============================================================================
-
-# Creat year variable 
 wine_reviews <- raw_wine_reviews %>% 
   mutate(year = as.numeric(str_extract(title, "\\-*\\d+\\.*\\d*"))) %>% 
   mutate(year = ifelse(year > 1950 & year < 2017, year, NA))
 
-# Summary statistics of  year, points, and price 
+# -----------------------------------------------------------------------------
+# 0.2 Subset into relavent groups 
+# -----------------------------------------------------------------------------
+
+ca_wine_reviews <- wine_reviews %>% filter(province == "California")
+italy_wine_reviews <- wine_reviews %>% filter(country == "Italy")
+france_wine_reviews <- wine_reviews %>% filter(province == "France")
+  
+# =============================================================================
+# 1.0 Summary of the dataset  
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# 1.1 Lets 'glimpse' the data and see what we're working with 
+# -----------------------------------------------------------------------------
+
+tibble(wine_reviews)
+
+# -----------------------------------------------------------------------------
+# 1.2 Summary statistics 
+# -----------------------------------------------------------------------------
+
+# Summary statistics of year, points, and price 
 wine_reviews %>% 
   select(year, points, price) %>% 
   summary()
 
 # =============================================================================
-# 3. Graphical Representation of Data & Normality Tests 
+# 3. Graphical Representation of Data 
 # =============================================================================
 
 # Summary plots of year, points and price 
@@ -59,9 +70,8 @@ year_hist <-  wine_reviews %>% wine_hist(year, "Year", bins = 40)
 price_hist <- wine_reviews %>% wine_hist(price, "Price", bins = 40)
 points_hist <- wine_reviews %>% wine_hist(points, "Points", bins = 20)
 
-grid.arrange(year_box, year_qq, year_hist, ncol=3 )
-grid.arrange(points_box, points_qq, points_hist, ncol=3 )
-grid.arrange(price_box, price_qq, price_hist, ncol=3 )
+lay <- rbind(c(1,2), c(1,3))
+grid.arrange(grobs = list(price_box, price_qq, price_hist), layout_matrix = lay)
 
 # =============================================================================
 # 4. Initial correlation / Chi Square tests / ANOVA analysis / Z-test or 
@@ -131,11 +141,16 @@ summary(anova_results)
 # Source: https://en.wikipedia.org/wiki/List_of_wine-producing_regions
 # -----------------------------------------------------------------------------
 
-raw_wine_reviews %>%
+raw_wine_reviews <- read.csv("data/winemag-data-130k-v2.csv")
+
+wine_count <- raw_wine_reviews %>%
+  mutate(country = as.character(country)) %>% # that's the trick 
   group_by(country) %>% 
   summarise(count = n()) %>% 
-  arrange(desc(count)) %>% 
-  head(10)
+  arrange(desc(count)) 
+
+wine_count <- wine_count %>% 
+  mutate(country = ifelse(country == "US", "United States", country))
 
 # -----------------------------------------------------------------------------
 # Note: Do we think Italy makes less >80pt wine or could it be that 
