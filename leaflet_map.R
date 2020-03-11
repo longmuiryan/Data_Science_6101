@@ -155,12 +155,11 @@ fr_wine_reviews <- raw_wine_reviews %>%
 # Prepare map data 
 # -----------------------------------------------------------------------------
 
-<<<<<<< HEAD
 # Grab the geojson & json (note that the file is named "provinces" but is captureing French "regions." Need to fix)
 fr_geojson <- geojsonio::geojson_read("json/france_provinces.geojson", what = "sp")
 fr_topo <- readLines("json/france_topography.json") %>% paste(collapse = "\n")
 
-# Grab the counties from the geojson
+# Grab the regions from the geojson
 fr_region <- tibble(fr_geojson$nom) %>% setNames("region") 
 
 # Merge in w/ wine reviews 
@@ -177,78 +176,78 @@ fr_region_count <- fr_wine_reviews %>%
 
 
 wine_heat(fr_region_count$region, fr_region_count$count, fr_topo, fr_geojson)
- 
-=======
->>>>>>> 9beae7c09f5ca6cf450ceec04e7e9be321afe98b
 
 # =============================================================================
 # Italy 
 # =============================================================================
-  
-it_geojson <- geojsonio::geojson_read("json/italy_regions.geojson", what = "sp")
-it_topo <- readLines("json/italy_regions_topo.json") %>% paste(collapse = "\n")
-
-# Inspect regions
-italy_regions_tbl <- as_tibble(it_geojson)
-italy_regions_tbl
-
-it_top_wines <- raw_wine_reviews %>%
-  filter(country == "Italy") %>% 
-  group_by(region_1) %>% 
-  summarise(count = n()) %>% 
-  arrange(desc(count)) %>% 
-  slice(1:50)
 
 # Regions
+# Greco di Tufo, Vino Spumante, Prosseco, Aglianico del Vulture grown in many places. 
+# Choosing to select the first on the wikipedia page.
 
 it_region_list <- list(
-  Piemonte = list("Barolo", "Barbaresco"),
-  Valle_dAosta/Vallée_dAoste = list(),
-  Lombardia = list("Collio", "Franciacorta"),
-  Trentino_Alto_Adige/Südtirol = list("Alto Adige"),
+  Piemonte = list("Piemonte", "Barbera di Piemonte"),
+  Valle_dAosta_Vallée_dAoste = list("Northwestern Italy"),
+  Lombardia = list("Collio", "Franciacorta", "Vino Spumante"),
+  Trentino_Alto_Adige_Südtirol = list("Alto Adige", "Trentino"),
   Veneto = list("Amarone della Valpolicella Classico", "Conegliano Valdobbiadene Prosecco Superiore",
                 "Amarone della Valpolicella", "Valdobbiadene Prosecco Superiore", "Prosecco",
-                "Veneto"),
-  Friuli_Venezia_Giulia	= list("Colli Orientali del Friuli"),
+                "Veneto", "Soave Classico", "Soave",
+                "Prosecco di Valdobbiadene"),
+  Friuli_Venezia_Giulia	= list("Colli Orientali del Friuli", "Delle Venezie", "Venezia Giulia"),
   Liguria = list(),
   Emilia_Romagna = list(),
   Toscana	= list("Brunello di Montalcino", "Toscana", "Chianti Classico",
                  "Rosso di Montalcino", "Vino Nobile di Montepulciano", "Bolgheri",
-                 "Morellino di Scansano"),
-  Umbria = list(),
+                 "Morellino di Scansano", "Vernaccia di San Gimignano", "Chianti",
+                 "Rosso di Montepulciano", "Maremma Toscana"),
+  Umbria = list("Umbria"),
   Marche = list(),
   Lazio = list(),
-  Abruzzo = list(),
+  Abruzzo = list("Montepulciano d'Abruzzo"),
   Molise = list(),
-  Campania = list("Lugana"),
-  Puglia = list("Salento"),
-  Basilicata = list(),
+  Campania = list("Lugana", "Taurasi", "Fiano di Avellino",
+                  "Greco di Tufo", "Campania"),
+  Puglia = list("Salento", "Puglia"),
+  Basilicata = list("Aglianico del Vulture"),
   Calabria = list(),
-  Sicilia = list("Sicilia", "Etna", "Terre Siciliane",
-                 ),
-  Sardegna = list(),
-)
+  Sicilia = list("Sicilia", "Etna", "Terre Siciliane"),
+  Sardegna = list())
 
 it_wine_reviews <- raw_wine_reviews %>% 
   filter(country == "Italy") %>% 
   mutate(region = case_when(
-    province %in% it_region_list[[1]] ~ 
-    province %in% it_region_list[[2]] ~ 
-    province %in% it_region_list[[3]] ~ 
-    province %in% it_region_list[[4]] ~ 
-    province %in% it_region_list[[5]] ~ 
-    province %in% it_region_list[[6]] ~ 
-    province %in% it_region_list[[7]] ~ 
-    province %in% it_region_list[[8]] ~ 
-    province %in% it_region_list[[9]] ~ 
-    province %in% it_region_list[[10]] ~
-    province %in% it_region_list[[11]] ~
-    province %in% it_region_list[[12]] ~
-    province %in% it_region_list[[13]] ~ 
-    province %in% it_region_list[[14]] ~
-    province %in% it_region_list[[15]] ~
-    province %in% it_region_list[[16]] ~
-    province %in% it_region_list[[17]] ~
-    province %in% it_region_list[[18]] ~
-    province %in% it_region_list[[19]] ~
-    province %in% it_region_list[[20]] ~ ))
+    region_1 %in% it_region_list[[1]] ~ "Piemonte",
+    region_1 %in% it_region_list[[2]] ~ "Valle d'Aosta/Vallée d'Aoste",
+    region_1 %in% it_region_list[[3]] ~ "Lombardia",
+    region_1 %in% it_region_list[[4]] ~ "Trentino-Alto Adige/Südtirol",
+    region_1 %in% it_region_list[[5]] ~ "Veneto",
+    region_1 %in% it_region_list[[6]] ~ "Friuli-Venezia Giulia",
+    region_1 %in% it_region_list[[7]] ~ "Liguria",
+    region_1 %in% it_region_list[[8]] ~ "Emilia-Romagna",
+    region_1 %in% it_region_list[[9]] ~ "Toscana",
+    region_1 %in% it_region_list[[10]] ~ "Umbria",
+    region_1 %in% it_region_list[[11]] ~ "Marche",
+    region_1 %in% it_region_list[[12]] ~ "Lazio",
+    region_1 %in% it_region_list[[13]] ~ "Abruzzo",
+    region_1 %in% it_region_list[[14]] ~ "Molise",
+    region_1 %in% it_region_list[[15]] ~ "Campania",
+    region_1 %in% it_region_list[[16]] ~ "Puglia",
+    region_1 %in% it_region_list[[17]] ~ "Basilicata",
+    region_1 %in% it_region_list[[18]] ~ "Calabria",
+    region_1 %in% it_region_list[[19]] ~ "Sicilia",
+    region_1 %in% it_region_list[[20]] ~ "Sardegna"))  
+
+it_geojson <- geojsonio::geojson_read("json/italy_regions.geojson", what = "sp")
+it_topo <- readLines("json/italy_regions_topo.json") %>% paste(collapse = "\n")
+
+it_region <- tibble(it_geojson$reg_name) %>% setNames("region") 
+
+it_region_count <- it_wine_reviews %>% 
+  filter(country == "Italy") %>% 
+  group_by(region) %>% 
+  summarise(count = n()) %>% 
+  right_join(it_region, by = "region") %>% 
+  mutate(count = ifelse(is.na(count), 0, count))
+
+wine_heat(it_region_count$region, it_region_count$count, it_topo, it_geojson)
