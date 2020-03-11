@@ -12,6 +12,7 @@ setwd("~/Desktop/Git/edwinbet")
 library(tidyverse)
 library(geojsonio)
 library(leaflet)
+library(tibble)
 
 # =============================================================================
 # Data Cleaning 
@@ -116,8 +117,8 @@ wine_heat(ca_county_count$county, ca_county_count$count, ca_topo, ca_geojson)
 # France 
 # =============================================================================
 
-# Counties 
-region_list <- list(
+# Regions
+fr_region_list <- list(
   Île_de_France = list(),              
   Centre_Val_de_Loire = list(),         
   Bourgogne_Franche_Comté = list("Burgundy", "Beaujolais"),    
@@ -136,31 +137,31 @@ region_list <- list(
 fr_wine_reviews <- raw_wine_reviews %>% 
   filter(country == "France") %>% 
   mutate(region = case_when(
-    province %in% region_list[[1]] ~ "Île-de-France",
-    province %in% region_list[[2]] ~ "Centre-Val de Loire",
-    province %in% region_list[[3]] ~ "Bourgogne-Franche-Comté",
-    province %in% region_list[[4]] ~ "Normandie",
-    province %in% region_list[[5]] ~ "Hauts-de-France",
-    province %in% region_list[[6]] ~ "Grand Est",
-    province %in% region_list[[7]] ~ "Pays de la Loire",
-    province %in% region_list[[8]] ~ "Bretagne",
-    province %in% region_list[[9]] ~ "Nouvelle-Aquitaine",
-    province %in% region_list[[10]] ~ "Occitanie",
-    province %in% region_list[[11]] ~ "Auvergne-Rhône-Alpes",
-    province %in% region_list[[12]] ~ "Provence-Alpes-Côte d'Azur",
-    province %in% region_list[[13]] ~ "Corse"))
+    province %in% fr_region_list[[1]] ~ "Île-de-France",
+    province %in% fr_region_list[[2]] ~ "Centre-Val de Loire",
+    province %in% fr_region_list[[3]] ~ "Bourgogne-Franche-Comté",
+    province %in% fr_region_list[[4]] ~ "Normandie",
+    province %in% fr_region_list[[5]] ~ "Hauts-de-France",
+    province %in% fr_region_list[[6]] ~ "Grand Est",
+    province %in% fr_region_list[[7]] ~ "Pays de la Loire",
+    province %in% fr_region_list[[8]] ~ "Bretagne",
+    province %in% fr_region_list[[9]] ~ "Nouvelle-Aquitaine",
+    province %in% fr_region_list[[10]] ~ "Occitanie",
+    province %in% fr_region_list[[11]] ~ "Auvergne-Rhône-Alpes",
+    province %in% fr_region_list[[12]] ~ "Provence-Alpes-Côte d'Azur",
+    province %in% fr_region_list[[13]] ~ "Corse"))
 
 # -----------------------------------------------------------------------------
 # Prepare map data 
 # -----------------------------------------------------------------------------
 
 <<<<<<< HEAD
-# Grab the geojson & json 
+# Grab the geojson & json (note that the file is named "provinces" but is captureing French "regions." Need to fix)
 fr_geojson <- geojsonio::geojson_read("json/france_provinces.geojson", what = "sp")
 fr_topo <- readLines("json/france_topography.json") %>% paste(collapse = "\n")
 
 # Grab the counties from the geojson
-fr_region <- tibble(geojson$nom) %>% setNames("region") 
+fr_region <- tibble(fr_geojson$nom) %>% setNames("region") 
 
 # Merge in w/ wine reviews 
 fr_region_count <- fr_wine_reviews %>% 
@@ -176,8 +177,78 @@ fr_region_count <- fr_wine_reviews %>%
 
 
 wine_heat(fr_region_count$region, fr_region_count$count, fr_topo, fr_geojson)
-
-  
  
 =======
 >>>>>>> 9beae7c09f5ca6cf450ceec04e7e9be321afe98b
+
+# =============================================================================
+# Italy 
+# =============================================================================
+  
+it_geojson <- geojsonio::geojson_read("json/italy_regions.geojson", what = "sp")
+it_topo <- readLines("json/italy_regions_topo.json") %>% paste(collapse = "\n")
+
+# Inspect regions
+italy_regions_tbl <- as_tibble(it_geojson)
+italy_regions_tbl
+
+it_top_wines <- raw_wine_reviews %>%
+  filter(country == "Italy") %>% 
+  group_by(region_1) %>% 
+  summarise(count = n()) %>% 
+  arrange(desc(count)) %>% 
+  slice(1:50)
+
+# Regions
+
+it_region_list <- list(
+  Piemonte = list("Barolo", "Barbaresco"),
+  Valle_dAosta/Vallée_dAoste = list(),
+  Lombardia = list("Collio", "Franciacorta"),
+  Trentino_Alto_Adige/Südtirol = list("Alto Adige"),
+  Veneto = list("Amarone della Valpolicella Classico", "Conegliano Valdobbiadene Prosecco Superiore",
+                "Amarone della Valpolicella", "Valdobbiadene Prosecco Superiore", "Prosecco",
+                "Veneto"),
+  Friuli_Venezia_Giulia	= list("Colli Orientali del Friuli"),
+  Liguria = list(),
+  Emilia_Romagna = list(),
+  Toscana	= list("Brunello di Montalcino", "Toscana", "Chianti Classico",
+                 "Rosso di Montalcino", "Vino Nobile di Montepulciano", "Bolgheri",
+                 "Morellino di Scansano"),
+  Umbria = list(),
+  Marche = list(),
+  Lazio = list(),
+  Abruzzo = list(),
+  Molise = list(),
+  Campania = list("Lugana"),
+  Puglia = list("Salento"),
+  Basilicata = list(),
+  Calabria = list(),
+  Sicilia = list("Sicilia", "Etna", "Terre Siciliane",
+                 ),
+  Sardegna = list(),
+)
+
+it_wine_reviews <- raw_wine_reviews %>% 
+  filter(country == "Italy") %>% 
+  mutate(region = case_when(
+    province %in% it_region_list[[1]] ~ 
+    province %in% it_region_list[[2]] ~ 
+    province %in% it_region_list[[3]] ~ 
+    province %in% it_region_list[[4]] ~ 
+    province %in% it_region_list[[5]] ~ 
+    province %in% it_region_list[[6]] ~ 
+    province %in% it_region_list[[7]] ~ 
+    province %in% it_region_list[[8]] ~ 
+    province %in% it_region_list[[9]] ~ 
+    province %in% it_region_list[[10]] ~
+    province %in% it_region_list[[11]] ~
+    province %in% it_region_list[[12]] ~
+    province %in% it_region_list[[13]] ~ 
+    province %in% it_region_list[[14]] ~
+    province %in% it_region_list[[15]] ~
+    province %in% it_region_list[[16]] ~
+    province %in% it_region_list[[17]] ~
+    province %in% it_region_list[[18]] ~
+    province %in% it_region_list[[19]] ~
+    province %in% it_region_list[[20]] ~ ))
