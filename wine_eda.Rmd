@@ -216,6 +216,7 @@ wine_reviews <- wine_reviews %>%
 
 # Hist 
 wine_reviews %>% 
+  filter(!is.na(region)) %>% 
   ggplot(aes(x = points, colour = region)) +
   geom_density() + theme_minimal() + theme(text = element_text(size = 14),
   legend.position = c(0.8, 0.5)) + labs(title = "Distribution of Points by Region") + geom_vline(aes(xintercept= mean(points), color = region),
@@ -253,20 +254,21 @@ t.test(california$points, italy$points, var.equal = F)
 t.test(california$points, france$points, var.equal = F) 
 
 # histograms 
-wine_reviews %>% 
+p1 <- wine_reviews %>% 
   filter(region %in% c("France", "California")) %>% 
   ggplot(aes(x = points, colour = region)) +
   geom_density() + theme_minimal() + theme(text = element_text(size = 14),
   legend.position = c(0.8, 0.5)) + labs(title = "Distribution of Points by Region") + geom_vline(aes(xintercept= mean(points), color = region),
   linetype="dashed")
 
-wine_reviews %>% 
+p2 <- wine_reviews %>% 
   filter(region %in% c("Italy", "California")) %>% 
   ggplot(aes(x = points, colour = region)) +
   geom_density() + theme_minimal() + theme(text = element_text(size = 14),
   legend.position = c(0.8, 0.5)) + labs(title = "Distribution of Points by Region") + geom_vline(aes(xintercept= mean(points), color = region),
   linetype="dashed")
 
+grid.arrange(p1, p2, ncol = 1)
 ```
 
  <!-- ------------------------------------------------------------------
