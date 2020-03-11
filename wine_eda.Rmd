@@ -26,22 +26,35 @@ setwd("~/Desktop/Git/edwinbet")
 # load packages 
 library(tidyverse, quietly = T)
 library(gridExtra, quietly = T)
-library(ggExtra)
+library(ggExtra, quietly = T)
+library(kableExtra, quietly = T)
+library(xtable, quietly = T)
 
 # source files 
-# source("leaflet_map.R")
 source("plotting_functions.R")
+
 ```
+
 ## 0. Raw Data 
 ***
 
 ```{r Data, include = F}
+# load data 
 raw_wine_reviews <- read.csv("data/winemag-data-130k-v2.csv")
+
+# look at structure 
+as.tibble(raw_wine_reviews)
 ```
 
-### Data at a glance 
+### 0.1 First 10 Observations
 ```{r Glimpse, echo = F}
-as.tibble(raw_wine_reviews)
+raw_wine_reviews %>%
+  select(title, country, province, points, price) %>%
+  setNames(c("Title", "Country", "Province", "Points", "Price")) %>% 
+  slice(1:7) %>%
+  kable() %>%
+  kable_styling(bootstrap_options = "striped", full_width = F,
+  position = "left")
 ```
 
 
@@ -49,6 +62,7 @@ as.tibble(raw_wine_reviews)
 ***
 
 ```{r Descriptive statistics}
+
 # Creat year variable 
 wine_reviews <- raw_wine_reviews %>% 
   mutate(year = as.numeric(str_extract(title, "\\-*\\d+\\.*\\d*"))) %>% 
@@ -57,7 +71,12 @@ wine_reviews <- raw_wine_reviews %>%
 # Summary statistics of  year, points, and price 
 wine_reviews %>% 
   select(year, points, price) %>% 
-  summary()
+  setNames(c("Year", "Points", "Price")) %>% 
+  summary() %>% 
+  kable() %>% 
+  kable_styling(bootstrap_options = "striped", full_width = F,
+  position = "left")
+
 ```
 
 
@@ -66,53 +85,162 @@ wine_reviews %>%
 
 ### Price 
 ```{r Normality tests I }
-
-# Remove Outliers 
-IQR <- IQR(wine_reviews$price, na.rm = T)
-Q <- quantile(wine_reviews$price, probs=c(.25, .75), na.rm = T)
-lower_bound <- Q[1] - 1.5*IQR
-upper_bound <- Q[2] + 1.5*IQR
-
 # Box Plot 
-price_box <- wine_reviews %>%
-  filter(lower_bound < price & upper_bound > price) %>%
-  wine_box(price, title = "Price")
+box <- wine_reviews %>%
+  filter_outliers(price) %>% 
+  wine_box(price, title = "Price", fill = "#ffd1d1", col = "#811f1f")
 
 # QQ Plot 
-price_qq <- wine_reviews %>%
-  filter(lower_bound < price & upper_bound > price) %>%
-  wine_qq(price, "Points")
+qq <- wine_reviews %>%
+  filter_outliers(price) %>% 
+  wine_qq(price, "Price")
 
 # Histogram 
-price_hist <- wine_reviews %>% 
-  filter(lower_bound < price & upper_bound > price) %>%
-  wine_hist(price, "Price", bins = 20)
-
-grid.arrange(price_box, price_qq, price_hist, ncol = 3 )
+hist <- wine_reviews %>% 
+  filter_outliers(price) %>% 
+  wine_hist(price, "Price", bins = 12, fill = "#ffd1d1", col = "#811f1f")
 
 lay <- rbind(c(1,2), c(1,3))
-grid.arrange(grobs = list(price_box, price_qq, price_hist), layout_matrix = lay)
+grid.arrange(grobs = list(hist, qq, box), layout_matrix = lay)
+
 ```
 
 ### Year
 ```{r Normality tests II}
-year_box <-  wine_reviews %>% wine_box(year, "Year")
-year_qq <-  wine_reviews %>% wine_qq(year, "Year")
-year_hist <-  wine_reviews %>% wine_hist(year, "Year", bins = 40)
-grid.arrange(year_box, year_qq, year_hist, ncol=3 )
+# Box Plot 
+box <- wine_reviews %>%
+  filter_outliers(year) %>% 
+  wine_box(year, title = "Year", fill = "#ffd1d1", col = "#811f1f")
+
+# QQ Plot 
+qq <- wine_reviews %>%
+  filter_outliers(year) %>% 
+  wine_qq(year, "Year")
+
+# Histogram 
+hist <- wine_reviews %>% 
+  filter_outliers(year) %>% 
+  wine_hist(year, "Year", bins = 12, fill = "#ffd1d1", col = "#811f1f")
+
+lay <- rbind(c(1,2), c(1,3))
+grid.arrange(grobs = list(hist, qq, box), layout_matrix = lay)
 ```
 
 ### Points 
 ```{r Normality tests III}
-points_box <- wine_reviews %>% wine_box(points, "Points")
-points_qq <- wine_reviews %>% wine_qq(points, "Points")
-points_hist <- wine_reviews %>% wine_hist(points, "Points", bins = 20)
-grid.arrange(points_box, points_qq, points_hist, ncol=3 )
+# Box Plot 
+box <- wine_reviews %>%
+  filter_outliers(points) %>% 
+  wine_box(points, title = "Points", fill = "#ffd1d1", col = "#811f1f")
+
+# QQ Plot 
+qq <- wine_reviews %>%
+  filter_outliers(points) %>% 
+  wine_qq(points, "Points")
+
+# Histogram 
+hist <- wine_reviews %>% 
+  filter_outliers(points) %>% 
+  wine_hist(points, "Points", bins = 12, fill = "#ffd1d1", col = "#811f1f")
+
+lay <- rbind(c(1,2), c(1,3))
+grid.arrange(grobs = list(hist, qq, box), layout_matrix = lay)
 ```
 
 
+### Barplot of Wine Production
+```{r Barplots }
+
+top_10 <- wine_reviews %>%
+  group_by(country) %>% 
+  summarise(count = n()/ 129971) %>% 
+  mutate(count = round(count, 2)) %>% 
+  arrange(desc(count)) %>% 
+  head(5) 
+
+p1 <- ggplot(data = top_10, aes(x = reorder(country, -count), y = count), fill =
+  country) +
+  geom_bar(stat="identity",  fill = "#ffd1d1", col = "#811f1f") +
+  labs(title = "Proportion of Total Wine Reviews \n by Country", 
+  x = "Country", y = "Percentage") + ylim(0.0, 0.6) +
+  geom_text(aes(label= count), vjust = -0.75, color="black" , size=3.5)+
+  theme_minimal()
+
+top_10 <- wine_reviews %>%
+  filter(country == "US" & !province == "America") %>% 
+  group_by(province) %>% 
+  summarise(count = n()/ 54504) %>% 
+  mutate(count = round(count, 2)) %>% 
+  arrange(desc(count)) %>% 
+  head(5) 
+
+p2 <- ggplot(data = top_10, aes(x = reorder(province, -count), y = count), fill =
+  province) +
+  geom_bar(stat="identity",  fill = "#ffd1d1", col = "#811f1f") +
+  labs(title = "Proportion of Total Wine Reviews \n in the US by State", 
+  x = "State", y = "Percentage") + ylim(0.0, 0.8) +
+  geom_text(aes(label= count), vjust = -0.75, color="black" , size=3.5)+
+  theme_minimal()
+
+grid.arrange(p1, p2, ncol = 2)
+```
+ 
+ 
 ## 3. Initial correlation / Chi Square tests / ANOVA analysis / Z-test or Z-interval / T-test or T-interval etc. 
 ***
+ 
+### Bartlett Test Of Homogeneity Of Variances
+```{r Bartlett}
+# Bartlett 
+big_wine <- wine_reviews %>% filter(country %in% c("Italy", "France", "US")) 
+bartlett.test(big_wine$points, big_wine$country) 
+```
+ 
+### Overlayed Histagram
+```{r Overlayed Histagram}
+# Renamed variables 
+wine_reviews <- wine_reviews %>% 
+  mutate(region  = case_when(
+    province == "California" ~ "California",
+    country == "France" ~ "France", 
+    country == "Italy" ~ "Italy"))
+
+# Hist 
+wine_reviews %>% 
+  filter_outliers(price) %>%
+  filter(!is.na(region)) %>% 
+  ggplot(aes(x = points, colour = region)) +
+  geom_density() + theme_minimal() + theme(text = element_text(size = 14),
+  legend.position = c(0.8, 0.5)) + labs(title = "Distribution of Points by Region") 
+
+``` 
+ 
+
+### Anova 
+Interpretation: The p-value is lower than the usual threshold of 0.05. You are confident to say there is a statistical difference between the groups
+```{r Anova }
+# subset 
+big_wine <- wine_reviews %>% 
+  filter(country %in% c("Italy", "France", "US")) 
+
+# anova 
+anova_results <- aov(points ~ country, data = big_wine)
+summary(anova_results) 
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+## Correlation 
 
 ### Price vs. points 
 
@@ -167,136 +295,6 @@ t.test(domestic_wines$points, imported_wines$points)
 ```
 
 
-### Anova 
-Interpretation: The p-value is lower than the usual threshold of 0.05. You are confident to say there is a statistical difference between the groups
-```{r Anova }
-# subset 
-big_wine <- wine_reviews %>% 
-  filter(country %in% c("Italy", "Spain", "France", "US")) 
-
-# anova 
-anova_results <- aov(points ~ country, data = big_wine)
-summary(anova_results) 
-```
-
-### Who makes the most >80pt wine?
-
-You'd think it might be Italy but the answer might suprise you. Source: https://en.wikipedia.org/wiki/List_of_wine-producing_regions
-
-Note: Do we think Italy makes less >80pt wine or could it be that Wine Enthusiast is more likely to review a bottle of wine from the United States? This could potentially be a point of bias in our sample. 
-
-```{r Count}
-raw_wine_reviews %>%
-  group_by(country) %>% 
-  summarise(count = n()) %>% 
-  arrange(desc(count)) %>% 
-  head(10)
-```
-
-## Barplot 
-*** 
-
-```{r}
-
-sum_of_reviews <- raw_wine_reviews %>% 
-  summarise(count= n()) %>% 
-  print()
-
-top_10 <- raw_wine_reviews %>%
-  group_by(country) %>% 
-  summarise(count = n()/ 129971) %>% 
-  mutate(count = round(count, 2)) %>% 
-  arrange(desc(count)) %>% 
-  head(10) 
-
-ggplot(data = top_10, aes(x = reorder(country, -count), y = count), fill = country) +
-  geom_bar(stat="identity", fill = "#9a2140") +
-  labs(title = "Proportion of Total Wine Reviews by Country", 
-  x = "Country", y = "Percentage") +
-  geom_text(aes(label= count), vjust=1.3, color="white", size=3.5)+
-  theme_minimal()
-
-```
 
 
 
-```{r}
-
-sum_of_reviews <- raw_wine_reviews %>% 
-  summarise(count= n()) %>% 
-  print()
-
-top_10 <- raw_wine_reviews %>%
-  filter(country == "US" & province != "America") %>% 
-  group_by(province) %>%
-  summarise(count = n()/ 129971) %>% 
-  mutate(count = round(count, 2)) %>% 
-  arrange(desc(count)) %>% 
-  head(10) 
-
-ggplot(data = top_10, aes(x = reorder(province, -count), y = count), fill =  province) +
-  geom_bar(stat="identity", fill = "#9a2140") +
-  labs(title = "Proportion of US Wine Reviews by State", 
-  x = "State", y = "Percentage") +
-  geom_text(aes(label = count), vjust = 1.3, color= "white", size =   3.5) +
-  theme_minimal()
-
-
-```
-
-
-
-```{r}
-# Overlapping Histogram
-
-# ------------------------------------------------------------
-# points
-# ------------------------------------------------------------
-
-# Bounds 
-IQR <- IQR(raw_wine_reviews$points, na.rm = T)
-Q <- quantile(raw_wine_reviews$points, probs=c(.25, .75), na.rm = T)
-lower_bound <- Q[1] - 1.5*IQR
-upper_bound <- Q[2] + 1.5*IQR
-
-# Renamed variables 
-price_filtered_wine_reviews <- raw_wine_reviews %>% 
-  mutate(Region  = case_when(
-    province == "California" ~ "California",
-    country == "France" ~ "France", 
-    country == "Italy" ~ "Italy"))
-
-# Hist 
-p1 <- price_filtered_wine_reviews %>% 
-  filter(lower_bound < price & upper_bound > price) %>%
-  filter(!is.na(Region)) %>% 
-  ggplot(aes(x = points, colour = Region)) +
-  geom_density() + theme_minimal()
-
-# ------------------------------------------------------------
-# price 
-# ------------------------------------------------------------
-
-# Bounds 
-IQR <- IQR(raw_wine_reviews$price, na.rm = T)
-Q <- quantile(raw_wine_reviews$price, probs = c(.25, .75), na.rm = T)
-lower_bound <- Q[1] - 1.5*IQR
-upper_bound <- Q[2] + 1.5*IQR
-
-# Renamed variables 
-filter_price_wine_reviews <-raw_wine_reviews %>% 
-  mutate(Region  = case_when(
-    province == "California" ~ "California",
-    country == "France" ~ "France", 
-    country == "Italy" ~ "Italy"))
-
-# Hist 
-p2 <- filter_price_wine_reviews %>% 
-  filter(lower_bound < price & upper_bound > price) %>%
-  filter(!is.na(Region)) %>% 
-  ggplot(aes(x = price, colour = Region)) +
-  geom_density() + theme_minimal()
-
-grid.arrange(p1, p2, ncol = 1 )
-
-```

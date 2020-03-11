@@ -70,7 +70,8 @@ year_hist <-  wine_reviews %>% wine_hist(year, "Year", bins = 40)
 price_hist <- wine_reviews %>% wine_hist(price, "Price", bins = 40)
 points_hist <- wine_reviews %>% wine_hist(points, "Points", bins = 20)
 
-lay <- rbind(c(1,2), c(1,3))
+lay <- rbind(c(1,2),
+             c(1,3))
 grid.arrange(grobs = list(price_box, price_qq, price_hist), layout_matrix = lay)
 
 # =============================================================================
