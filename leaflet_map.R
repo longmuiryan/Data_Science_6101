@@ -155,9 +155,9 @@ fr_wine_reviews <- raw_wine_reviews %>%
 # Prepare map data 
 # -----------------------------------------------------------------------------
 
-# Grab the geojson & json (note that the file is named "provinces" but is captureing French "regions." Need to fix)
-fr_geojson <- geojsonio::geojson_read("json/france_provinces.geojson", what = "sp")
-fr_topo <- readLines("json/france_topography.json") %>% paste(collapse = "\n")
+# Grab the geojson & json (note that the file is named "provinces" but is capturing French "regions." Need to fix)
+fr_geojson <- geojsonio::geojson_read("json/france_regions.geojson", what = "sp")
+fr_topo <- readLines("json/fr_topo_regions.json") %>% paste(collapse = "\n")
 
 # Grab the regions from the geojson
 fr_region <- tibble(fr_geojson$nom) %>% setNames("region") 
