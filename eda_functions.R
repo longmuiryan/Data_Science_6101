@@ -64,7 +64,7 @@ filter_outliers <- function(dataframe, variable){
   UB <- Q[2] + 1.5*IQR
   cat(" Upper bound:", UB, "\n Lower bound:", LB)
   return(filter(dataframe, !! variable > LB & 
-    !! variable < UB & is.na(!! variable)))
+  !! variable < UB & !is.na(!! variable)))
 }
 
 # ------------------------------------------------------------------------
