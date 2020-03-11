@@ -35,8 +35,6 @@ source("plotting_functions.R")
 
 ```
 
-## 0. Raw Data 
-***
 
 ```{r Data, include = F}
 # load data 
@@ -50,7 +48,7 @@ as.tibble(raw_wine_reviews)
 SLIDE 4
 ------------------------------------------------------------------ -->
 
-### 0.1 Glimpse of the Dataset
+### Glimpse of the Dataset
 ```{r Glimpse, echo = F}
 raw_wine_reviews %>%
   select(title, country, province, points, price) %>%
@@ -65,9 +63,7 @@ raw_wine_reviews %>%
 SLIDES 5 - 7 
 ------------------------------------------------------------------ -->
 
-##  1. Descriptive Statistic: Global Perspective 
-***
-
+###  Descriptive Statistic 
 ```{r Descriptive statistics}
 
 # Creat year variable 
@@ -79,7 +75,6 @@ wine_reviews <- raw_wine_reviews %>%
 wine_reviews <- wine_reviews %>% 
   filter_outliers(price) %>% 
   filter_outliers(year) 
-
 
 # Summary statistics of  year, points, and price 
 wine_reviews %>% 
@@ -93,10 +88,7 @@ wine_reviews %>%
 ```
 
 
-## 2. Graphical Representation of Data & Normality Tests 
-***
-
-### Price 
+### Graphical Representation of Price 
 ```{r Normality tests I }
 # Box Plot 
 box <- wine_reviews %>%
@@ -115,7 +107,7 @@ grid.arrange(grobs = list(hist, qq, box), layout_matrix = lay)
 
 ```
 
-### Year
+### Graphical Representation of Year
 ```{r Normality tests II}
 # Box Plot 
 box <- wine_reviews %>%
@@ -133,7 +125,7 @@ lay <- rbind(c(1,2), c(1,3))
 grid.arrange(grobs = list(hist, qq, box), layout_matrix = lay)
 ```
 
-### Points 
+### Graphical Representation of Points  
 ```{r Normality tests III}
 # Box Plot 
 box <- wine_reviews %>%

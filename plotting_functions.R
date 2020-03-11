@@ -62,7 +62,7 @@ filter_outliers <- function(dataframe, variable){
   Q <- quantile(series, probs=c(.25, .75), na.rm = T)
   LB <- Q[1] - 1.5*IQR
   UB <- Q[2] + 1.5*IQR
-  cat(" Upper bound:", UB, "\n Lower bound:", LB)
+ # cat(" Upper bound:", UB, "\n Lower bound:", LB)
   return(filter(dataframe, !! variable > LB & !! variable 
     < UB & !is.na(!! variable)))
 }
