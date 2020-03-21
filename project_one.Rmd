@@ -39,7 +39,7 @@ Nullam luctus consectetur risus a scelerisque. Aenean at lorem sed mi elementum 
 boxplot(pressure)
 ```
 
-## Section 2 
+## Section 2
 
 Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed dapibus tempor elit, vitae porta nisl tempor sit amet. Phasellus in eleifend nulla, sit amet luctus libero. Duis fermentum magna vel nulla accumsan, sed porttitor dui rutrum. Ut eu leo rutrum, accumsan quam quis, gravida diam. Aliquam consequat odio vitae nulla efficitur facilisis. Cras eget enim fringilla, volutpat dui et, cursus elit. Aenean finibus fringilla eros, sed porttitor erat volutpat id. Aenean vel faucibus turpis. Sed egestas lorem id ornare dapibus. Praesent vulputate blandit risus, id ultricies elit eleifend vel.
 
@@ -51,4 +51,4 @@ plot(pressure)
 
 Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed dapibus tempor elit, vitae porta nisl tempor sit amet. Phasellus in eleifend nulla, sit amet luctus libero. Duis fermentum magna vel nulla accumsan, sed porttitor dui rutrum. Ut eu leo rutrum, accumsan quam quis, gravida diam. Aliquam consequat odio vitae nulla efficitur facilisis. Cras eget enim fringilla, volutpat dui et, cursus elit. Aenean finibus fringilla eros, sed porttitor erat volutpat id. Aenean vel faucibus turpis. Sed egestas lorem id ornare dapibus. Praesent vulputate blandit risus, id ultricies elit eleifend vel.
 
-Curabitur tincidunt felis non urna molestie porttitor. Vestibulum posuere arcu lorem, sed dapibus ex aliquet in. Duis aliquam ut enim sit amet dignissim. Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos. Cras convallis urna ut risus tristique, at faucibus nisi sodales. Nunc lectus lorem, interdum sit amet euismod in, posuere eu nisi. Aliquam est quam, congue vitae molestie ac, elementum id urna. Ut pharetra blandit erat, eu molestie ante euismod vel.
+Curabitur tincidunt felis non urna molestie porttitor. Vestibulum posuere arcu lorem, sed dapibus ex aliquet in. Duis aliquam ut enim sit amet dignissim. Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos. Cras convallis urna ut risus tristique, at faucibus nisi sodales. Nunc lectus lorem, interdum sit amet euismod in, posuere eu nisi. Aliquam est quam, congue vitae molestie ac, elementum id urna. Ut pharetra blandit erat, eu molestie ante euismod vel. 

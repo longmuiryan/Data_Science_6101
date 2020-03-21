@@ -29,9 +29,10 @@ library(gridExtra, quietly = T)
 library(ggExtra, quietly = T)
 library(kableExtra, quietly = T)
 library(xtable, quietly = T)
+library(RColorBrewer, quietly = T)
 
 # source files 
-source("plotting_functions.R")
+source("eda_functions.R")
 
 ```
 
@@ -215,6 +216,65 @@ wine_reviews %>%
   linetype="dashed")
 
 ``` 
+
+
+### Comparative Box Plots 
+```{r}
+
+# compare accross country
+wine_reviews %>% 
+  filter(!is.na(region)) %>% 
+  ggplot(aes(x = region, y = points)) + 
+  geom_boxplot(aes(color = region)) + 
+  scale_color_manual(values = c("#00AFBB", "#E7B800", "#FC4E07")) + 
+  theme_minimal()
+
+# subset by group 
+wine_reviews <- wine_reviews %>% 
+ mutate(price_bucket = case_when(
+   price < 15 ~ "less then $15",
+   price %in% 15:29 ~ "$15 to $29",
+   price %in% 30:44 ~ "$30 to $44", 
+   price %in% 45:60 ~ "$45 to $60", 
+   price > 60 ~ "greater than $60")
+ ) %>% 
+  mutate(price_bucket = factor(price_bucket, 
+  levels = c("less then $15", "$15 to $29", "$30 to $44", 
+    "$45 to $60", "greater than $60"))
+  )
+
+colors <- c('#eae8e8', '#9a005d', '#830048', '#690040', '#540037')
+
+# box plot by bucket 
+ca <- wine_reviews %>% 
+  filter(region == "California") %>% 
+  ggplot(aes(x = price_bucket, y = points, fill = price_bucket)) + 
+  geom_boxplot() + 
+  theme_minimal() + theme(legend.position = "none") +
+  scale_fill_brewer(palette="BuPu") + 
+  labs(x = "California")
+
+it <- wine_reviews %>% 
+  filter(region == "Italy") %>% 
+  ggplot(aes(x = price_bucket, y = points, fill = price_bucket)) + 
+  geom_boxplot() + 
+  theme_minimal() + theme(legend.position = "none") +
+  scale_fill_brewer(palette="BuPu") + 
+  labs(x = "Italy")
+
+fr <- wine_reviews %>% 
+  filter(region == "France") %>% 
+  ggplot(aes(x = price_bucket, y = points, fill = price_bucket)) + 
+  geom_boxplot() + 
+  theme_minimal() + theme(legend.position = "none") +
+  scale_fill_brewer(palette="BuPu") + 
+  labs(x = "France")
+
+grid.arrange(ca, fr, it, ncol = 1)
+
+```
+
+ 
  
 ### Anova 
 

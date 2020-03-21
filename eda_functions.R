@@ -25,10 +25,10 @@ wine_qq <- function(dataframe, variable, title = NULL){
   return(p1)
 }
 
-wine_box <- function(dataframe, variable, title = NULL){
+wine_box <- function(dataframe, variable, title = NULL, ...){
   variable <- enquo(variable)
   p1 <- ggplot(dataframe, aes(x = " ", y = !! variable)) +
-    geom_boxplot() + 
+    geom_boxplot(...) + 
     labs(title = paste(title, "Box Plot"), y = "") + 
     theme_minimal()
   return(p1)
