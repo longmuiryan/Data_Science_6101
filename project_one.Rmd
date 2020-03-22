@@ -19,36 +19,320 @@ body {
   background-color: #FFFFF;
 }
 
-
 .list-group-item.active, .list-group-item.active:focus, .list-group-item.active:hover {
     color: #FFFFF;
     background-color: #2A363B;
 }
+```
+ 
+```{r Preample, include = F}
+
+# knitr settings 
+knitr::opts_chunk$set(fig.width = 12, fig.height = 4,
+  warning=FALSE, message=FALSE, echo = FALSE)
+
+# set working directory 
+setwd("~/Desktop/Git/edwinbet")
+source("eda_functions.R")
+
+# load packages 
+loadPkg(tidyverse)
+loadPkg(gridExtra)
+loadPkg(ggExtra)
+loadPkg(kableExtra)
+loadPkg(xtable)
+
+# load data 
+raw_wine_reviews <- read.csv("data/winemag-data-130k-v2.csv")
+```
+
+
+## Abstract
+
+*Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed dapibus tempor elit, vitae porta nisl tempor sit amet. Phasellus in eleifend nulla, sit amet luctus libero. Duis fermentum magna vel nulla accumsan, sed porttitor dui rutrum. Ut eu leo rutrum, accumsan quam quis, gravida diam. Aliquam consequat odio vitae nulla efficitur facilisis. Cras eget enim fringilla, volutpat dui et, cursus elit. Aenean finibus fringilla eros, sed porttitor erat volutpat id. Aenean vel faucibus turpis. Sed egestas lorem id ornare dapibus. Praesent vulputate blandit risus, id ultricies elit eleifend vel.*
+
+## Introduction & Background
+
+*Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed dapibus tempor elit, vitae porta nisl tempor sit amet. Phasellus in eleifend nulla, sit amet luctus libero. Duis fermentum magna vel nulla accumsan, sed porttitor dui rutrum. Ut eu leo rutrum, accumsan quam quis, gravida diam. Aliquam consequat odio vitae nulla efficitur facilisis. Cras eget enim fringilla, volutpat dui et, cursus elit. Aenean finibus fringilla eros, sed porttitor erat volutpat id. Aenean vel faucibus turpis. Sed egestas lorem id ornare dapibus. Praesent vulputate blandit risus, id ultricies elit eleifend vel.*
+
+## Dataset 
+
+*Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed dapibus tempor elit, vitae porta nisl tempor sit amet. Phasellus in eleifend nulla, sit amet luctus libero. Duis fermentum magna vel nulla accumsan, sed porttitor dui rutrum. Ut eu leo rutrum, accumsan quam quis, gravida diam. Aliquam consequat odio vitae nulla efficitur facilisis. Cras eget enim fringilla, volutpat dui et, cursus elit. Aenean finibus fringilla eros, sed porttitor erat volutpat id. Aenean vel faucibus turpis. Sed egestas lorem id ornare dapibus. Praesent vulputate blandit risus, id ultricies elit eleifend vel.*
+
+## SMART Research Question 
+
+*Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed dapibus tempor elit, vitae porta nisl tempor sit amet. Phasellus in eleifend nulla, sit amet luctus libero. Duis fermentum magna vel nulla accumsan, sed porttitor dui rutrum. Ut eu leo rutrum, accumsan quam quis, gravida diam. Aliquam consequat odio vitae nulla efficitur facilisis. Cras eget enim fringilla, volutpat dui et, cursus elit. Aenean finibus fringilla eros, sed porttitor erat volutpat id. Aenean vel faucibus turpis. Sed egestas lorem id ornare dapibus. Praesent vulputate blandit risus, id ultricies elit eleifend vel.*
+
+## Exploratory Data Analysis 
+
+*Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed dapibus tempor elit, vitae porta nisl tempor sit amet. Phasellus in eleifend nulla, sit amet luctus libero. Duis fermentum magna vel nulla accumsan, sed porttitor dui rutrum. Ut eu leo rutrum, accumsan quam quis, gravida diam. Aliquam consequat odio vitae nulla efficitur facilisis. Cras eget enim fringilla, volutpat dui et, cursus elit. Aenean finibus fringilla eros, sed porttitor erat volutpat id. Aenean vel faucibus turpis. Sed egestas lorem id ornare dapibus. Praesent vulputate blandit risus, id ultricies elit eleifend vel.*
+
+### Glimpse of the Dataset
+```{r Glimpse, echo = F}
+raw_wine_reviews %>%
+  select(title, country, province, points, price) %>%
+  setNames(c("Title", "Country", "Province", "Points", "Price")) %>% 
+  slice(1:7) %>%
+  kable() %>%
+  kable_styling(bootstrap_options = "striped", full_width = F,
+  position = "left")
+```
+
+###  Descriptive Statistic 
+```{r Descriptive statistics}
+
+# Creat year variable 
+wine_reviews <- raw_wine_reviews %>% 
+  mutate(year = as.numeric(str_extract(title, "\\-*\\d+\\.*\\d*"))) %>% 
+  mutate(year = ifelse(year > 1950 & year < 2017, year, NA))
+
+# Filter for outliers 
+wine_reviews <- wine_reviews %>% 
+  filter_outliers(price) %>% 
+  filter_outliers(year) 
+
+# Summary statistics of  year, points, and price 
+wine_reviews %>% 
+  select(year, points, price) %>% 
+  setNames(c("Year", "Points", "Price")) %>% 
+  summary() %>% 
+  kable() %>% 
+  kable_styling(bootstrap_options = "striped", full_width = F,
+  position = "left")
 
 ```
 
-## Section 1 
+### Graphical Representation of Price 
+```{r Normality I }
+# Box Plot 
+box <- wine_reviews %>%
+  wine_box(price, title = "Price", fill = "#ffd1d1", col = "#811f1f")
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed dapibus tempor elit, vitae porta nisl tempor sit amet. Phasellus in eleifend nulla, sit amet luctus libero. Duis fermentum magna vel nulla accumsan, sed porttitor dui rutrum. Ut eu leo rutrum, accumsan quam quis, gravida diam. Aliquam consequat odio vitae nulla efficitur facilisis. Cras eget enim fringilla, volutpat dui et, cursus elit. Aenean finibus fringilla eros, sed porttitor erat volutpat id. Aenean vel faucibus turpis. Sed egestas lorem id ornare dapibus. Praesent vulputate blandit risus, id ultricies elit eleifend vel.
+# QQ Plot 
+qq <- wine_reviews %>%
+  wine_qq(price, "Price")
 
-Curabitur tincidunt felis non urna molestie porttitor. Vestibulum posuere arcu lorem, sed dapibus ex aliquet in. Duis aliquam ut enim sit amet dignissim. Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos. Cras convallis urna ut risus tristique, at faucibus nisi sodales. Nunc lectus lorem, interdum sit amet euismod in, posuere eu nisi. Aliquam est quam, congue vitae molestie ac, elementum id urna. Ut pharetra blandit erat, eu molestie ante euismod vel.
+# Histogram 
+hist <- wine_reviews %>% 
+  wine_hist(price, "Price", bins = 12, fill = "#ffd1d1", col = "#811f1f")
 
-Nullam luctus consectetur risus a scelerisque. Aenean at lorem sed mi elementum semper. Nunc id lacus ligula. Integer faucibus suscipit magna eget lacinia. Sed et urna et nunc commodo finibus et eget tortor. Quisque bibendum ante suscipit venenatis egestas. Donec quis semper purus. Praesent tempus ligula vel augue ultricies vestibulum in at ipsum. Mauris in lacus sapien. Sed ut sodales ligula. Mauris ultricies sagittis ante et dapibus. Nulla euismod luctus lacus, a pretium diam laoreet eu. Donec gravida sollicitudin blandit.
+lay <- rbind(c(1,2), c(1,3))
+grid.arrange(grobs = list(hist, qq, box), layout_matrix = lay)
 
-```{r box plot}
-boxplot(pressure)
 ```
 
-## Section 2
+### Graphical Representation of Year
+```{r Normality II}
+# Box Plot 
+box <- wine_reviews %>%
+  wine_box(year, title = "Year", fill = "#ffd1d1", col = "#811f1f")
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed dapibus tempor elit, vitae porta nisl tempor sit amet. Phasellus in eleifend nulla, sit amet luctus libero. Duis fermentum magna vel nulla accumsan, sed porttitor dui rutrum. Ut eu leo rutrum, accumsan quam quis, gravida diam. Aliquam consequat odio vitae nulla efficitur facilisis. Cras eget enim fringilla, volutpat dui et, cursus elit. Aenean finibus fringilla eros, sed porttitor erat volutpat id. Aenean vel faucibus turpis. Sed egestas lorem id ornare dapibus. Praesent vulputate blandit risus, id ultricies elit eleifend vel.
+# QQ Plot 
+qq <- wine_reviews %>%
+  wine_qq(year, "Year")
 
-Curabitur tincidunt felis non urna molestie porttitor. Vestibulum posuere arcu lorem, sed dapibus ex aliquet in. Duis aliquam ut enim sit amet dignissim. Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos. Cras convallis urna ut risus tristique, at faucibus nisi sodales. Nunc lectus lorem, interdum sit amet euismod in, posuere eu nisi. Aliquam est quam, congue vitae molestie ac, elementum id urna. Ut pharetra blandit erat, eu molestie ante euismod vel.
+# Histogram 
+hist <- wine_reviews %>% 
+  wine_hist(year, "Year", bins = 12, fill = "#ffd1d1", col = "#811f1f")
 
-```{r pressure}
-plot(pressure)
+lay <- rbind(c(1,2), c(1,3))
+grid.arrange(grobs = list(hist, qq, box), layout_matrix = lay)
 ```
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed dapibus tempor elit, vitae porta nisl tempor sit amet. Phasellus in eleifend nulla, sit amet luctus libero. Duis fermentum magna vel nulla accumsan, sed porttitor dui rutrum. Ut eu leo rutrum, accumsan quam quis, gravida diam. Aliquam consequat odio vitae nulla efficitur facilisis. Cras eget enim fringilla, volutpat dui et, cursus elit. Aenean finibus fringilla eros, sed porttitor erat volutpat id. Aenean vel faucibus turpis. Sed egestas lorem id ornare dapibus. Praesent vulputate blandit risus, id ultricies elit eleifend vel.
 
-Curabitur tincidunt felis non urna molestie porttitor. Vestibulum posuere arcu lorem, sed dapibus ex aliquet in. Duis aliquam ut enim sit amet dignissim. Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos. Cras convallis urna ut risus tristique, at faucibus nisi sodales. Nunc lectus lorem, interdum sit amet euismod in, posuere eu nisi. Aliquam est quam, congue vitae molestie ac, elementum id urna. Ut pharetra blandit erat, eu molestie ante euismod vel. 
+### Graphical Representation of Points  
+```{r Normality tests III}
+# Box Plot 
+box <- wine_reviews %>%
+  wine_box(points, title = "Points", fill = "#ffd1d1", col = "#811f1f")
+
+# QQ Plot 
+qq <- wine_reviews %>%
+  wine_qq(points, "Points")
+
+# Histogram 
+hist <- wine_reviews %>% 
+  wine_hist(points, "Points", bins = 12, fill = "#ffd1d1", col = "#811f1f")
+
+lay <- rbind(c(1,2), c(1,3))
+grid.arrange(grobs = list(hist, qq, box), layout_matrix = lay)
+```
+
+### Barplot of Wine Production
+```{r Barplots of Wine Production }
+
+top_10 <- wine_reviews %>%
+  group_by(country) %>% 
+  summarise(count = n()/ 129971) %>% 
+  mutate(count = round(count, 2)) %>% 
+  arrange(desc(count)) %>% 
+  head(5) 
+
+p1 <- ggplot(data = top_10, aes(x = reorder(country, -count), y = count),
+  fill = country) +
+  geom_bar(stat="identity",  fill = "#ffd1d1", col = "#811f1f") +
+  labs(title = "Proportion of Total Wine Reviews \n by Country", 
+  x = "Country", y = "Percentage") + ylim(0.0, 0.6) +
+  geom_text(aes(label= count), vjust = -0.75, color="black" , size=3.5)+
+  theme_minimal()
+
+top_10 <- wine_reviews %>%
+  filter(country == "US" & !province == "America") %>% 
+  group_by(province) %>% 
+  summarise(count = n()/ 54504) %>% 
+  mutate(count = round(count, 2)) %>% 
+  arrange(desc(count)) %>% 
+  head(5) 
+
+p2 <- ggplot(data = top_10, aes(x = reorder(province, -count), y = count),
+  fill = province) +
+  geom_bar(stat="identity",  fill = "#ffd1d1", col = "#811f1f") +
+  labs(title = "Proportion of Total Wine Reviews \n in the US by State", 
+  x = "State", y = "Percentage") + ylim(0.0, 0.8) +
+  geom_text(aes(label= count), vjust = -0.75, color="black" , size=3.5)+
+  theme_minimal()
+
+grid.arrange(p1, p2, ncol = 2)
+```
+
+
+## Inferential Statistics
+
+*Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed dapibus tempor elit, vitae porta nisl tempor sit amet. Phasellus in eleifend nulla, sit amet luctus libero. Duis fermentum magna vel nulla accumsan, sed porttitor dui rutrum. Ut eu leo rutrum, accumsan quam quis, gravida diam. Aliquam consequat odio vitae nulla efficitur facilisis. Cras eget enim fringilla, volutpat dui et, cursus elit. Aenean finibus fringilla eros, sed porttitor erat volutpat id. Aenean vel faucibus turpis. Sed egestas lorem id ornare dapibus. Praesent vulputate blandit risus, id ultricies elit eleifend vel.*
+
+#### Bartlett Test Of Homogeneity Of Variance
+```{r Bartlett}
+# Bartlett 
+big_wine <- wine_reviews %>% filter(country %in% c("Italy", "France", "US")) 
+bartlett.test(big_wine$points, big_wine$country) 
+```
+
+####  Density by Region
+```{r Density by Region }
+# Renamed variables 
+wine_reviews <- wine_reviews %>% 
+  mutate(region  = case_when(
+    province == "California" ~ "California",
+    country == "France" ~ "France", 
+    country == "Italy" ~ "Italy"))
+
+# Hist 
+wine_reviews %>% 
+  filter(!is.na(region)) %>% 
+  ggplot(aes(x = points, colour = region)) +
+  geom_density() + theme_minimal() + theme(text = element_text(size = 14),
+  legend.position = c(0.8, 0.5)) + labs(title = "Distribution of Points by Region") + geom_vline(aes(xintercept= mean(points), color = region),
+  linetype="dashed")
+``` 
+
+#### Box Plots by Region
+```{r Box Plots by Region}
+# compare accross country
+wine_reviews %>% 
+  filter(!is.na(region)) %>% 
+  ggplot(aes(x = region, y = points)) + 
+  geom_boxplot(aes(color = region)) + 
+  scale_color_manual(values = c("#F768A1", "#C51B8A","#7A0177")) + 
+  theme_minimal()
+```
+
+#### Box Plots by Price Bucket
+```{r Box Plots by Price Bucket}
+
+# subset by group 
+wine_reviews <- wine_reviews %>% 
+ mutate(price_bucket = case_when(
+   price < 15 ~ "less then $15",
+   price %in% 15:29 ~ "$15 to $29",
+   price %in% 30:44 ~ "$30 to $44", 
+   price %in% 45:60 ~ "$45 to $60", 
+   price > 60 ~ "greater than $60")
+ ) %>% 
+  mutate(price_bucket = factor(price_bucket, 
+  levels = c("less then $15", "$15 to $29", "$30 to $44", 
+    "$45 to $60", "greater than $60"))
+  )
+
+pallet <- c("#7A0177", "#C51B8A", "#F768A1", "#C51B8A","#7A0177")
+
+# box plot by bucket 
+ca <- wine_reviews %>% 
+  filter(region == "California") %>% 
+  ggplot(aes(x = price_bucket, y = points)) + labs(x = "California") +
+  geom_boxplot(aes(col = price_bucket, fill = price_bucket, alpha = 0.15)) + 
+  scale_color_manual(values = pallet) + scale_fill_manual(values = pallet) +
+  theme_minimal() + theme(legend.position = "none")
+
+it <- wine_reviews %>% 
+  filter(region == "Italy") %>% 
+  ggplot(aes(x = price_bucket, y = points)) + labs(x = "Italy") +
+  geom_boxplot(aes(col = price_bucket)) + 
+  scale_color_manual(values = pallet) +
+  theme_minimal() + theme(legend.position = "none")
+
+fr <- wine_reviews %>% 
+  filter(region == "France") %>% 
+  ggplot(aes(x = price_bucket, y = points)) + labs(x = "France") +
+  geom_boxplot(aes(col = price_bucket, fill = price_bucket, alpha = 0.15)) + 
+  scale_color_manual(values = pallet) + scale_fill_manual(values = pallet) +
+  theme_minimal() + theme(legend.position = "none")
+
+ca 
+it 
+fr
+```
+
+### Two Sample T-Test
+```{r Two Sample T-Test}
+
+california <- wine_reviews %>% filter(province == "California") 
+italy <-  wine_reviews %>% filter(country == "Italy")
+france <-  wine_reviews %>% filter(country == "France")
+
+# -----------------------------------------------------------
+# France vs. California 
+# -----------------------------------------------------------
+
+# tests 
+t.test(california$points, france$points, var.equal = F) 
+
+# density 
+wine_reviews %>% 
+  filter(region %in% c("France", "California")) %>% 
+  ggplot(aes(x = points, color = region)) +
+  geom_density() + theme_minimal() + theme(text = element_text(size = 14),
+  legend.position = c(0.8, 0.5)) + labs(title = "Distribution of Points by Region") +
+  geom_vline(aes(xintercept= mean(points), color = region),
+  linetype="dashed")
+
+# -----------------------------------------------------------
+# Italy vs. California 
+# -----------------------------------------------------------
+
+# T-test 
+t.test(california$points, italy$points, var.equal = F) 
+
+# Density Plot 
+wine_reviews %>% 
+  filter(region %in% c("Italy", "California")) %>% 
+  ggplot(aes(x = points, colour = region)) +
+  geom_density() + theme_minimal() + theme(text = element_text(size = 14),
+  legend.position = c(0.8, 0.5)) + labs(title = "Distribution of Points by Region") + geom_vline(aes(xintercept= mean(points), color = region),
+  linetype="dashed")
+
+
+```
+
+
+## Results & Discussion 
+
+*Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed dapibus tempor elit, vitae porta nisl tempor sit amet. Phasellus in eleifend nulla, sit amet luctus libero. Duis fermentum magna vel nulla accumsan, sed porttitor dui rutrum. Ut eu leo rutrum, accumsan quam quis, gravida diam. Aliquam consequat odio vitae nulla efficitur facilisis. Cras eget enim fringilla, volutpat dui et, cursus elit. Aenean finibus fringilla eros, sed porttitor erat volutpat id. Aenean vel faucibus turpis. Sed egestas lorem id ornare dapibus. Praesent vulputate blandit risus, id ultricies elit eleifend vel.*
+
+## Conculsion 
+
+*Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed dapibus tempor elit, vitae porta nisl tempor sit amet. Phasellus in eleifend nulla, sit amet luctus libero. Duis fermentum magna vel nulla accumsan, sed porttitor dui rutrum. Ut eu leo rutrum, accumsan quam quis, gravida diam. Aliquam consequat odio vitae nulla efficitur facilisis. Cras eget enim fringilla, volutpat dui et, cursus elit. Aenean finibus fringilla eros, sed porttitor erat volutpat id. Aenean vel faucibus turpis. Sed egestas lorem id ornare dapibus. Praesent vulputate blandit risus, id ultricies elit eleifend vel.*
+
+## References 
+
+*Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed dapibus tempor elit, vitae porta nisl tempor sit amet. Phasellus in eleifend nulla, sit amet luctus libero. Duis fermentum magna vel nulla accumsan, sed porttitor dui rutrum. Ut eu leo rutrum, accumsan quam quis, gravida diam. Aliquam consequat odio vitae nulla efficitur facilisis. Cras eget enim fringilla, volutpat dui et, cursus elit. Aenean finibus fringilla eros, sed porttitor erat volutpat id. Aenean vel faucibus turpis. Sed egestas lorem id ornare dapibus. Praesent vulputate blandit risus, id ultricies elit eleifend vel.*
+

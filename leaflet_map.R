@@ -9,10 +9,10 @@ setwd("~/Desktop/Git/edwinbet")
 # Packages
 # -----------------------------------------------------------------------------
 
-library(tidyverse)
-library(geojsonio)
-library(leaflet)
-library(tibble)
+source("eda_functions.R")
+loadPkg(tidyverse)
+loadPkg(geojsonio)
+loadPkg(leaflet)
 
 # =============================================================================
 # Data Cleaning 

@@ -1,15 +1,27 @@
 
 # ========================================================================
-# functional programming w/ the tidyverse 
+# functions  
 # ========================================================================
 
-# setwd("~/Desktop/Git/edwinbet")
-
 # ------------------------------------------------------------------------
-# packages 
+# edwin's load package function 
 # ------------------------------------------------------------------------
 
-library(tidyverse)
+loadPkg <- function(pkg, character.only = FALSE) { 
+  if (!character.only) {
+    pkg <- as.character(substitute(pkg))
+  }
+  if (!require(pkg,character.only=T, quietly =T)) {
+    install.packages(pkg,dep=T,repos="http://cran.us.r-project.org");
+    if(!require(pkg,character.only=T)) stop("Package not found")
+  } 
+}
+
+# ------------------------------------------------------------------------
+# packages neccessary for the remainder of fuctions
+# ------------------------------------------------------------------------
+
+loadPkg(tidyverse)
 
 # ------------------------------------------------------------------------
 # plotting functions

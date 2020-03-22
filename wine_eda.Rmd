@@ -22,17 +22,14 @@ knitr::opts_chunk$set(fig.width = 12, fig.height = 4,
 
 # set working directory 
 setwd("~/Desktop/Git/edwinbet")
+source("eda_functions.R")
 
 # load packages 
-library(tidyverse, quietly = T)
-library(gridExtra, quietly = T)
-library(ggExtra, quietly = T)
-library(kableExtra, quietly = T)
-library(xtable, quietly = T)
-library(RColorBrewer, quietly = T)
-
-# source files 
-source("eda_functions.R")
+loadPkg(tidyverse)
+loadPkg(gridExtra)
+loadPkg(ggExtra)
+loadPkg(kableExtra)
+loadPkg(xtable)
 
 ```
 
@@ -243,34 +240,33 @@ wine_reviews <- wine_reviews %>%
     "$45 to $60", "greater than $60"))
   )
 
-colors <- c('#eae8e8', '#9a005d', '#830048', '#690040', '#540037')
+pallet <- c("#7A0177", "#C51B8A", "#F768A1", "#C51B8A","#7A0177")
 
 # box plot by bucket 
 ca <- wine_reviews %>% 
   filter(region == "California") %>% 
-  ggplot(aes(x = price_bucket, y = points, fill = price_bucket)) + 
-  geom_boxplot() + 
-  theme_minimal() + theme(legend.position = "none") +
-  scale_fill_brewer(palette="BuPu") + 
-  labs(x = "California")
+  ggplot(aes(x = price_bucket, y = points)) + labs(x = "California") +
+  geom_boxplot(aes(col = price_bucket, fill = price_bucket, alpha = 0.15)) + 
+  scale_color_manual(values = pallet) + scale_fill_manual(values = pallet) +
+  theme_minimal() + theme(legend.position = "none")
 
 it <- wine_reviews %>% 
   filter(region == "Italy") %>% 
-  ggplot(aes(x = price_bucket, y = points, fill = price_bucket)) + 
-  geom_boxplot() + 
-  theme_minimal() + theme(legend.position = "none") +
-  scale_fill_brewer(palette="BuPu") + 
-  labs(x = "Italy")
+  ggplot(aes(x = price_bucket, y = points)) + labs(x = "Italy") +
+  geom_boxplot(aes(col = price_bucket, fill = price_bucket, alpha = 0.15)) + 
+  scale_color_manual(values = pallet) + scale_fill_manual(values = pallet) +
+  theme_minimal() + theme(legend.position = "none")
 
 fr <- wine_reviews %>% 
   filter(region == "France") %>% 
-  ggplot(aes(x = price_bucket, y = points, fill = price_bucket)) + 
-  geom_boxplot() + 
-  theme_minimal() + theme(legend.position = "none") +
-  scale_fill_brewer(palette="BuPu") + 
-  labs(x = "France")
+  ggplot(aes(x = price_bucket, y = points)) + labs(x = "France") +
+  geom_boxplot(aes(col = price_bucket, fill = price_bucket, alpha = 0.15)) + 
+  scale_color_manual(values = pallet) + scale_fill_manual(values = pallet) +
+  theme_minimal() + theme(legend.position = "none")
 
-grid.arrange(ca, fr, it, ncol = 1)
+ca 
+it 
+fr
 
 ```
 
