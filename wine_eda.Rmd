@@ -30,6 +30,7 @@ loadPkg(gridExtra)
 loadPkg(ggExtra)
 loadPkg(kableExtra)
 loadPkg(xtable)
+loadPkg(gganimate)
 
 ```
 
@@ -66,7 +67,7 @@ SLIDES 5 - 7
 
 # Creat year variable 
 wine_reviews <- raw_wine_reviews %>% 
-  mutate(year = as.numeric(str_extract(title, "\\-*\\d+\\.*\\d*"))) %>% 
+  mutate(year = as.integer(str_extract(title, "\\-*\\d+\\.*\\d*"))) %>% 
   mutate(year = ifelse(year > 1950 & year < 2017, year, NA))
 
 # Filter for outliers 
@@ -293,6 +294,7 @@ SLIDE 11
 ### Two Sample T-Test 
 
 ```{r}
+
 california <- wine_reviews %>% filter(province == "California") 
 italy <-  wine_reviews %>% filter(country == "Italy")
 france <-  wine_reviews %>% filter(country == "France")
@@ -326,10 +328,11 @@ SLIDE 12
 ### Regression Model 
 
 ```{r}
+
 model <- wine_reviews %>%
   mutate(yearDemeaned = year - 2010.682) %>% 
   filter(region %in% c("Italy", "France", "California")) %>% 
-  lm(formula = points ~ region + price + yearDemeaned ) 
+  lm(formula = points ~ region + price + year) 
 
 summary(model) %>% 
   xtable() %>% 
@@ -337,6 +340,53 @@ summary(model) %>%
   kable_styling(bootstrap_options = "striped", full_width = F,
   position = "left")
 ```
+
+<!-- ------------------------------------------------------------------
+ADDITIONAL GRAPHICS
+------------------------------------------------------------------ -->
+
+### Scatter Plots
+```{r}
+
+# price  vs. points
+wine_reviews %>%
+  filter(region == "California") %>% 
+  ggplot(aes(x = price, y = points)) +
+  geom_point(show.legend = FALSE, alpha = 0.7) +
+  geom_smooth(method=lm)
+
+# price  vs. points grouped by region (not so informative)
+wine_reviews %>%
+  ggplot(aes(x = price, y = points, color = region)) +
+  geom_point(show.legend = FALSE, alpha = 0.7) +
+  geom_smooth(method=lm)
+
+# year  vs. points
+wine_reviews %>%
+  filter(region == "California") %>% 
+  ggplot(aes(x = year, y = points)) +
+  geom_point(show.legend = FALSE, alpha = 0.7) +
+  geom_smooth(method=lm)
+
+```
+
+### Animated Bar Plot 
+```{r}
+wine_reviews %>% 
+  filter(!is.na(region)) %>% 
+  group_by(region, year) %>% 
+  summarise(count = n()) %>% 
+  ggplot(aes(x = region, y = count, color = region, fill =
+    region, alpha = 0.43)) + 
+  geom_bar(stat="identity") + 
+  transition_time(year) + 
+  labs(title = "Year: {frame_time}") +
+  theme_minimal() + 
+  theme(legend.position = "none")
+```
+
+
+
 
 <!-- ------------------------------------------------------------------
 END OF PRESENTATION 

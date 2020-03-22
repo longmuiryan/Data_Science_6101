@@ -3,8 +3,6 @@ bpi.dev2
 .Rhistory
 .RData
 .Ruserdata
-
-
 master
 .DS_Store
 .Rproj
@@ -38,3 +36,4 @@ vignettes/*.pdf
 .Renviron
 .Rproj.user
 edwinbet.Rproj
+project_one_files
