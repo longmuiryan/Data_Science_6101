@@ -34,6 +34,7 @@ knitr::opts_chunk$set(fig.width = 12, fig.height = 4,
 # set working directory 
 # setwd("~/Desktop/Git/edwinbet")
 source("eda_functions.R")
+source("leaflet_map.R")
 
 # load packages 
 loadPkg(tidyverse)
@@ -41,6 +42,7 @@ loadPkg(gridExtra)
 loadPkg(ggExtra)
 loadPkg(kableExtra)
 loadPkg(xtable)
+loadPkg(gganimate)
 
 # load data 
 raw_wine_reviews <- read.csv("data/winemag-data-130k-v2.csv")
@@ -77,6 +79,8 @@ raw_wine_reviews %>%
 *Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed dapibus tempor elit, vitae porta nisl tempor sit amet. Phasellus in eleifend nulla, sit amet luctus libero. Duis fermentum magna vel nulla accumsan, sed porttitor dui rutrum. Ut eu leo rutrum, accumsan quam quis, gravida diam. Aliquam consequat odio vitae nulla efficitur facilisis. Cras eget enim fringilla, volutpat dui et, cursus elit. Aenean finibus fringilla eros, sed porttitor erat volutpat id. Aenean vel faucibus turpis. Sed egestas lorem id ornare dapibus. Praesent vulputate blandit risus, id ultricies elit eleifend vel.*
 
 ### Limitations
+
+![World Climate](images/world_climate.png)
 
 ## SMART Research Question 
 
@@ -231,6 +235,8 @@ wine_reviews %>%
   linetype="dashed") + theme(plot.title = element_text(hjust = 0.5))
 ``` 
 
+The below boxplot illustrates the point distribution of the wines reviewed in all three of our regions of interest. Given that WineEnthusiast only reviews wines that score 80 points or more, the distribution lies between 80 and 100 points. The plot, however, shows that wines reviewed from both the Old World and the New World score about the same in all regions.
+
 #### Box Plots by Region
 ```{r Box Plots by Region}
 # compare accross country
@@ -239,9 +245,11 @@ wine_reviews %>%
   ggplot(aes(x = region, y = points)) + 
   geom_boxplot(aes(color = region)) + 
   scale_color_manual(values = c("#F768A1", "#C51B8A","#7A0177")) + 
-  labs(title = "California", x = "Region", y = "Points") + 
-  theme_minimal()
+  labs(title = "Points by Region", x = "Region", y = "Points") + 
+  theme_minimal() + theme(plot.title = element_text(hjust = 0.5))
 ```
+
+We chose to use the below boxplots to compare the price distribution of Old World and New World wines by points. Seemingly, the more expensive the wine, the more highly rated it is across all regions investigated, suggesting that a wine’s price may have an effect on how well it is scored.
 
 #### Box Plots by Price Bucket
 ```{r Box Plots by Price Bucket}
@@ -333,17 +341,24 @@ wine_reviews %>%
 
 ## Results & Discussion 
 
-### Regional Distribution of Reviews
+### Regional Distribution of Reviews by Wine Origin
 
-```{r Maps}
-source("leaflet_map.R")
+We visualized where the wines reviewed originated from in each of the three regions investigated in this study in the below maps. Using the `leaflet` package, maps were made to divide the Old World Countries into regions; New World into counties (this was due to a constraint on resources and future work will map the New World wines by region). The quantity in each division can be seen by mousing-over it on the map - the darker the division, the more wine reviews came from it.
 
-# California
+#### California
+```{r California}
+
 wine_heat(ca_county_count$county, ca_county_count$count, ca_topo, ca_geojson)
+```
 
+#### France
+```{r France}
 # France
 wine_heat(fr_region_count$region, fr_region_count$count, fr_topo, fr_geojson)
+```
 
+#### Italy
+```{r Italy)}
 # Italy
 wine_heat(it_region_count$region, it_region_count$count, it_topo, it_geojson)
 ```
@@ -357,3 +372,29 @@ wine_heat(it_region_count$region, it_region_count$count, it_topo, it_geojson)
 
 *Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed dapibus tempor elit, vitae porta nisl tempor sit amet. Phasellus in eleifend nulla, sit amet luctus libero. Duis fermentum magna vel nulla accumsan, sed porttitor dui rutrum. Ut eu leo rutrum, accumsan quam quis, gravida diam. Aliquam consequat odio vitae nulla efficitur facilisis. Cras eget enim fringilla, volutpat dui et, cursus elit. Aenean finibus fringilla eros, sed porttitor erat volutpat id. Aenean vel faucibus turpis. Sed egestas lorem id ornare dapibus. Praesent vulputate blandit risus, id ultricies elit eleifend vel.*
 
+## Supplemental Figures
+A scatter plot of price vs. points.
+```{r Scatter Plot}
+# price  vs. points grouped by region (not so informative)
+wine_reviews %>%
+  ggplot(aes(x = price, y = points, color = region)) +
+  geom_point(show.legend = FALSE, alpha = 0.7) +
+  geom_smooth(method=lm) + 
+  theme_minimal()
+```
+
+### Animated Bar Plot 
+An animated visual illustrating the number of reviews in each per year.
+```{r Animated Plot}
+wine_reviews %>% 
+  filter(!is.na(region)) %>% 
+  group_by(region, year) %>% 
+  summarise(count = n()) %>% 
+  ggplot(aes(x = region, y = count, color = region, fill =
+    region, alpha = 0.43)) + 
+  geom_bar(stat="identity") + 
+  transition_time(year) + 
+  labs(title = "Year: {frame_time}") +
+  theme_minimal() + 
+  theme(legend.position = "none")
+```
