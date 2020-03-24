@@ -330,9 +330,11 @@ SLIDE 12
 ```{r}
 
 model <- wine_reviews %>%
-  mutate(yearDemeaned = year - 2010.682) %>% 
+  mutate(
+    year_demeaned = year - 2011.146, 
+    price_demeaned = price - 31.91123) %>% 
   filter(region %in% c("Italy", "France", "California")) %>% 
-  lm(formula = points ~ region + price + year) 
+  lm(formula = points ~ region + price_demeaned + year_demeaned) 
 
 summary(model) %>% 
   xtable() %>% 
@@ -394,6 +396,33 @@ wine_reviews %>%
 <!-- ------------------------------------------------------------------
 END OF PRESENTATION 
 ------------------------------------------------------------------ -->
+
+### Anova 
+
+Recall our SMART research question **are wines grown in the New World (i.e., California) rated higher on average than wine grown in the Old World (i.e., France and Italy)**. To determine whether the average wine scores were the same between California, France, and Italy, we were interested in conducting a one way ANOVA test. Before doing so we attempted to validate each of the ANOVA assumptions of normality, homogeneity and independent errors. To visualize the distribution of points for each region we created a density plot displayed in **figure #**. Notice that each of the lines are approximately normal, verifying the first assumption. However, notice the points distribution in California is significantly flatter than Italy's. The Barlett's test displayed in **figure #** that the variance of wine scores among each region is different, violating the second ANOVA assumption. Furthermore, we believe in the existence of clustered errors in this dataset (e.g., scores of wines produced by the same vineyard are likely correlated). Since the ANOVA was no longer a viable option we opted to conduct a series of two-sample t-tests.
+
+ [insert density plot] [insert Barretts test]
+
+### Two-Sample T-Test 
+
+We conducted two two-sample t-tests comparing California and Italy and California and France. Both the tests and their associated density plots are displayed in **figures # through #**. Both two-sample t-tests rejected the null hypothesis of equal means at the one percent level. Although the means are significantly different, the density plots reveal that the mean points of wines grown in each region are very similar, often within 0.1 points. Since the average wine score within each region is similar, this result suggests that the region where a wine is grown may not be a strong predictor of its wine score. 
+
+[insert two sample t]
+[inset density plots]
+
+### Regression 
+
+We estimate the following model to better understand the effect of the region where a bottle of wine is produced on the score of a bottle of wine holding other factors constant.
+
+$$points = \beta_{0} + \beta_{1}*region + \beta_{2}*year + \beta_{3}*price + e$$ 
+
+where points is equal to wine's score, region is equal to either California, France or Italy and price is measured in dollars. Both year and price are demeaned (i.e., the mean price and year have been subtracted from each observation in the sample) to easily interpret the intercept our model specification. Thus, we may interpret the intercept as the average score of a wine grown in California priced at roughly 32 dollars produced in 2011. The regression table is displayed in **figure #**. The region, year, and price variables are all statistically significant at the one percent level. Wines grown in France and Italy are rated 0.354 and 0.260 points higher than wines produced in California respectively. Also, the table suggests a one year increase in a wine's age is associated with a 0.176 point decrease in score. Similarly, a one-dollar increase in price is associated with a 0.097 increase in points. 
+
+The model is consistent with similar statistics and figures discussed earlier in the paper and raise questions with regards to the effect of year on points. Similar to the two-sample t-test and box plots measuring points between California, Italy, and France, the regression table suggests that the region doesn't have a meaningful effect on wine scores when comparing the world's best wine regions. A 0.354 point increase in less than a one percent increase (form the average California wine with 88.3 points) and likely would not persuade a consumer exclusively interested in choosing wines based on points. Also, notice the coefficient   $\beta_{2}$ for $year$ is  positive. This result is surprising because aging, the process of storing wine before it is bottled, is associated with am improvement in taste and flavor over time. However, the coefficient suggests that wine produced in 2010 is roughly 2 points higher than wine produced in 1990 on average, which could be a meaningful difference for consumers. We look forward to building models with more of the variables available in our dataset and with other methods such as interaction terms, fixed effects, and difference and difference. 
+
+[insert regression table]
+
+
 
 
 
