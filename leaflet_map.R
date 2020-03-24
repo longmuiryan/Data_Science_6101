@@ -1,5 +1,5 @@
 
-setwd("~/Desktop/Git/edwinbet")
+# setwd("~/Desktop/Git/edwinbet")
 
 # =============================================================================
 # Maps  
@@ -84,8 +84,8 @@ ca_counties <- tibble(ca_geojson$name) %>% setNames("county")
 ca_county_count <- ca_wine_reviews %>% 
   group_by(county) %>% 
   summarise(count = n()) %>%
-  right_join(ca_counties, by = "county")
-  # mutate(count = ifelse(is.na(count), 0, count))
+  right_join(ca_counties, by = "county") %>%
+  mutate(count = ifelse(is.na(count), 0, count))
 
 # -----------------------------------------------------------------------------
 # Mapping function 
@@ -96,7 +96,7 @@ wine_heat <- function(location, count, topo, geojson){
   colors <- c('#eae8e8', '#9a005d', '#830048', '#690040', '#540037')
   pal <- colorNumeric(colors, NULL, reverse = F)
   
-  heat_map <- leaflet(geojson) %>%
+  heat_map <- leaflet(data=geojson, height=800, width=800) %>%
     addTiles() %>%
     addProviderTiles(providers$CartoDB.Positron) %>%
     addPolygons(stroke = FALSE, smoothFactor = 0.3, fillOpacity = 0.8,
