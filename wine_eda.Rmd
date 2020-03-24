@@ -62,7 +62,7 @@ raw_wine_reviews %>%
 SLIDES 5 - 7 
 ------------------------------------------------------------------ -->
 
-###  Descriptive Statistic 
+###  Descriptive Statistics
 ```{r Descriptive statistics}
 
 # Creat year variable 
@@ -353,20 +353,23 @@ wine_reviews %>%
   filter(region == "California") %>% 
   ggplot(aes(x = price, y = points)) +
   geom_point(show.legend = FALSE, alpha = 0.7) +
-  geom_smooth(method=lm)
+  geom_smooth(method=lm) +
+  theme_minimal()
 
 # price  vs. points grouped by region (not so informative)
 wine_reviews %>%
   ggplot(aes(x = price, y = points, color = region)) +
   geom_point(show.legend = FALSE, alpha = 0.7) +
-  geom_smooth(method=lm)
+  geom_smooth(method=lm) + 
+  theme_minimal()
 
 # year  vs. points
 wine_reviews %>%
   filter(region == "California") %>% 
   ggplot(aes(x = year, y = points)) +
   geom_point(show.legend = FALSE, alpha = 0.7) +
-  geom_smooth(method=lm)
+  geom_smooth(method=lm) + 
+  theme_minimal()
 
 ```
 
