@@ -51,22 +51,27 @@ raw_wine_reviews <- read.csv("data/winemag-data-130k-v2.csv")
 
 ## Abstract
 
-*Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed dapibus tempor elit, vitae porta nisl tempor sit amet. Phasellus in eleifend nulla, sit amet luctus libero. Duis fermentum magna vel nulla accumsan, sed porttitor dui rutrum. Ut eu leo rutrum, accumsan quam quis, gravida diam. Aliquam consequat odio vitae nulla efficitur facilisis. Cras eget enim fringilla, volutpat dui et, cursus elit. Aenean finibus fringilla eros, sed porttitor erat volutpat id. Aenean vel faucibus turpis. Sed egestas lorem id ornare dapibus. Praesent vulputate blandit risus, id ultricies elit eleifend vel.*
+  This study aimed to compare wines from the Old World with those from the New World to determine where the best wines are being produced. Generally, the Old World can be defined as Europe, and the New World as everywhere else. We analyzed a dataset obtained from Kaggle.com composed of wine reviews originally published in WineEnthusiast between 1990 and 2017. The dataset included 13 variables across approximately 130 thousand reviews. Preliminary analysis and characterization of the data required defining Old World wines as those originating from France and Italy, and New World wines as those produced in the United States, specifically California. As the analysis will show, these regions are not necessarily the largest wine-producing regions in the world, but rather they are the most predominantly reviewed and therefore allow for greater power in the analysis of our data set. These data do not represent all wines produced throughout the world, instead, only those wines reviewed by WineEnthusiast with an overall score of eighty or above, with eighty being the lowest score considered for review. Exploratory data analysis and removal of outliers revealed our data followed normal, Gaussian distribution. Small, yet statistically significant, differences based on quality points and price in the reviews of Old and New World wines were discovered, yet there appeared to be no real geographical or regional advantage for the production of “good” wine.  
 
 ## Introduction & Background
 
-### A Brief History of Wine
+### _A Brief History of Wine:_  
 
-### Styles and Common Varieties
+  Wine, in the broadest sense, can be defined as an alcoholic beverage produced from fermented fruit juice. In theory any fruit (e.g., plums, apples, and strawberries) may be used to make wine; however, the overwhelming majority of wines produced throughout the world, greater than 99%, come from grapes. There exists over 10,000 varieties of wine grapes within the genus Vitis and species vinifera. These grapes are quite different from table grapes found on grocery store shelves - they are smaller, sweeter, and contain a lot of seeds. Of the thousands of wine grapes, only about 1,300 are used in wine production, with approximately 75% of the world’s wine being produced from around 100 varieties of Vitis vinifera. The basic process for turning grapes into wine is remarkably simple: pick your favorite grape variety, crush them to release their juice, and then wait while yeast converts the sugar from the juice into ethanol in a process known as fermentation. Wine has been produced for thousands of years, and for most of that time, what exactly changed juice to spirit remained a mystery. Thanks to Louis Pasteur in the 19th century, the mystery of fermentation was finally revealed (McCarthy, et al., 2019).  
 
-### 'Old World' vs. 'New World' Wines
+### _Styles and Common Varieties:_  
 
-*Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed dapibus tempor elit, vitae porta nisl tempor sit amet. Phasellus in eleifend nulla, sit amet luctus libero. Duis fermentum magna vel nulla accumsan, sed porttitor dui rutrum. Ut eu leo rutrum, accumsan quam quis, gravida diam. Aliquam consequat odio vitae nulla efficitur facilisis. Cras eget enim fringilla, volutpat dui et, cursus elit. Aenean finibus fringilla eros, sed porttitor erat volutpat id. Aenean vel faucibus turpis. Sed egestas lorem id ornare dapibus. Praesent vulputate blandit risus, id ultricies elit eleifend vel.*
+  There are four general categories, or styles, of wine: red, white, rosé (or blush), and sparkling. This list can be further refined to include subcategories like light-bodied white, full-bodied red, dessert wine, and fortified wines like port and Madeira. Generally, Old World wines, or those from Europe, are identified by region, like Bordeaux, Burgundy, and Rioja; whereas New World wines, or those produced outside Europe, tnd to be named for the grape used in it’s production, for example Cabernet Sauvignon and Pinot Noir (McCarthy, et al., 2019).  
+  
+  Red wines are produced from red or purplish grapes, referred to as “black” grapes by industry professionals and can vary significantly based on the variety of ways winemakers employ to achieve the desired kind of wine. For example, if the grape juice is allowed more prolonged contact with the grape skins, the resulting wine will be darker, fuller, and more tannic. If, however, the juice is drained from the skins earlier, the wine will tend to be lighter, softer, and less tannic. The most prevalent red wine grape is Cabernet Sauvignon, which can be used to make single-varietal wine as well as popular blends like Bordeaux and Rhone wines (McCarthy, et al., 2019).  
 
-## Dataset 
+  White wines are made two different ways: using white grapes and using red grapes. Using red grapes to produce white wine complicates the process, as it requires completely separating the juice from the skins. Very few white wines are made this way, with Champagne, commonly produced from the red Pinot Noir grape, likely being the most recognizable exception. Dry white wines are the most common, created from complete fermentation of the grape juice. Sweet, dessert wines are produced by interrupting the fermentation process before all the grape sugars are converted into ethanol. Sparkling wines, which tend to be white, are created when carbon dioxide from the fermentation process escapes in the bottle rather than in a barrel (McCarthy, et al., 2019). Rose’ wines are made from a wide variety of grapes and  reside in the middle between reds and whites. They are produced by allowing the clear juice to contact the red grape skins for short periods, resulting in the various shades of pink color characteristic of blush wines (J. Robinson, 2006).  
 
-### Description
-```{r Glimpse, echo = F}
+### _Wine-producing Regions - Defining ‘Old World’ and ‘New World’:_  
+
+  The top ten wine-producing countries, in order of metric tons produced per year, are: (1) Italy, (2) France, (3) Spain, (4) the United States, (5) Argentina, (6) Chile, (7) Australia, (8) Germany, (9) South Africa, and (10) China (Karlsson, 2019). Based on the availability of data, this study focused on wines produced in France, Italy and the United States, specifically California (Fig 1a and 1b). Famous wine regions in France, Bordeaux and Champagne, and those of Italy like Tuscany and Piedmont  are representative of the Old World, while California represents the New World. Many of the world’s finest and most celebrated wines come from countries and regions, both New World and Old World, that are not considered here. For example, due to a lack of reviews in the dataset, Spain is excluded from this study even though it produces the third-highest quantity of wine per year according to the International Organization of Vine and Wine (OIV), and some are among the best in the world. Likewise, New World countries like Argentina, Chile, and Australia produce some excellent wines, but are outside the scope of this analysis.  
+  
+```{r Glimpse, results= F}
 raw_wine_reviews %>%
   select(title, country, province, points, price) %>%
   setNames(c("Title", "Country", "Province", "Points", "Price")) %>% 
@@ -76,15 +81,6 @@ raw_wine_reviews %>%
   position = "left")
 ```
 
-*Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed dapibus tempor elit, vitae porta nisl tempor sit amet. Phasellus in eleifend nulla, sit amet luctus libero. Duis fermentum magna vel nulla accumsan, sed porttitor dui rutrum. Ut eu leo rutrum, accumsan quam quis, gravida diam. Aliquam consequat odio vitae nulla efficitur facilisis. Cras eget enim fringilla, volutpat dui et, cursus elit. Aenean finibus fringilla eros, sed porttitor erat volutpat id. Aenean vel faucibus turpis. Sed egestas lorem id ornare dapibus. Praesent vulputate blandit risus, id ultricies elit eleifend vel.*
-
-### Limitations
-
-![World Climate](images/world_climate.png)
-
-## SMART Research Question 
-
-### Barplot of Wine Production
 ```{r Barplots of Wine Production }
 # Create year variable 
 wine_reviews <- raw_wine_reviews %>% 
@@ -107,7 +103,7 @@ p1 <- ggplot(data = top_10, aes(x = reorder(country, -count), y = count),
   fill = country) +
   geom_bar(stat="identity",  fill = "#ffd1d1", col = "#811f1f") +
   labs(title = "Proportion of Total Wine Reviews \n by Country", 
-  x = "Country", y = "Percentage") + ylim(0.0, 0.6) +
+  x = "Country", y = "Fraction") + ylim(0.0, 0.6) +
   geom_text(aes(label= count), vjust = -0.75, color="black" , size=3.5)+
   theme_minimal() + theme(plot.title = element_text(hjust = 0.5))
 
@@ -123,52 +119,101 @@ p2 <- ggplot(data = top_10, aes(x = reorder(province, -count), y = count),
   fill = province) +
   geom_bar(stat="identity",  fill = "#ffd1d1", col = "#811f1f") +
   labs(title = "Proportion of Total Wine Reviews \n in the US by State", 
-  x = "State", y = "Percentage") + ylim(0.0, 0.8) +
+  x = "State", y = "Fraction") + ylim(0.0, 0.8) +
   geom_text(aes(label= count), vjust = -0.75, color="black" , size=3.5)+
   theme_minimal() + theme(plot.title = element_text(hjust = 0.5))
 
 grid.arrange(p1, p2, ncol = 2)
 ```
 
-*Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed dapibus tempor elit, vitae porta nisl tempor sit amet. Phasellus in eleifend nulla, sit amet luctus libero. Duis fermentum magna vel nulla accumsan, sed porttitor dui rutrum. Ut eu leo rutrum, accumsan quam quis, gravida diam. Aliquam consequat odio vitae nulla efficitur facilisis. Cras eget enim fringilla, volutpat dui et, cursus elit. Aenean finibus fringilla eros, sed porttitor erat volutpat id. Aenean vel faucibus turpis. Sed egestas lorem id ornare dapibus. Praesent vulputate blandit risus, id ultricies elit eleifend vel.*
+#### _France:_
 
-## Exploratory Data Analysis 
+  The French have been making wine for centuries and they have, in a sense, become the bar by which to measure other wine-producing countries. France is practically synonymous with wine, and to truly know wine, one must know French wine. Centuries of experience, mixed with an ideal juxtaposition of soil and climate, and the ability to claim hometown rights to many of the world’s most eminent grapes, such as Pinot Noir, Chardonnay, Cabernet Sauvignon, Merlot, Sauvignon Blanc, and Syrah, all combine to make France the gold standard of wine-producing countries (McCarthy, et al., 2019).  
 
-###  Descriptive Statistic s
-```{r Descriptive statistics}
+  Understanding French wine requires some knowledge of Appellation d’Origine Contrôlée (AOC), which translates to “regulated place (origin) - name.” The AOC dates back to 1935 and is a legislative model for France and other European countries for defining wine-producing regions. In fact, the European Union’s wine laws are modeled on the French system (McCarthy, et al., 2019).  Generally, wines produced in France are named for the place or region of their origin, rather than the type of grapes used. These places are not arbitrarily chosen, but rather are registered areas defined by law. Wines from the Bordeaux Valley are named “Bordeaux” and wines from Burgundy are named “Burgundy,” and so on. The French system is more concerned with the style, or technique of wine making than the choice of grape.  
 
-# Summary statistics of  year, points, and price 
-wine_reviews %>% 
-  select(year, points, price) %>% 
-  setNames(c("Year", "Points", "Price")) %>% 
-  summary() %>% 
-  kable() %>% 
-  kable_styling(bootstrap_options = "striped", full_width = F,
-  position = "left")
+  This is a system centered on hierarchy where wines from certain, typically smaller, regions rank higher than those from other places. Simply being ranked higher doesn’t guarantee it's better; it merely suggests that it should be. For reds look to Bordeaux, Burgundy, and Rhône. In contrast, the Loire Valley and Alsace are known for their whites, and, of course, Champagne, arguably the most prestigious wine-producing region in the world, is the place for sparkling wines. Regardless of other considerations, if the AOC marking appears on the label (or Appellation d’Origine Protégée, AOP) with the actual region in the middle (e.g., Appellation Bordeaux Contrôlée), then the wine is from one of the small, more elite wine growing regions described above. If instead Vin de Pays or Indication Géographique Protégée (IGP) is displayed on the label, the wine is from a larger, less well-defined area of France and likely costs less than AOC/AOP wines. A third category of French wine, Vin de France, is not regulated by French wine laws, it includes wines merely produced from grapes grown somewhere in France. (McCarthy, et al., 2019).
 
+```{r France}
+# France
+wine_heat(fr_region_count$region, fr_region_count$count, fr_topo, fr_geojson)
 ```
 
-### Graphical Representation of Price 
-```{r Normality I }
-# Box Plot 
-box <- wine_reviews %>%
-  wine_box(price, title = "Price", fill = "#ffd1d1", col = "#811f1f") + theme(plot.title = element_text(hjust = 0.5))
+#### _Italy:_  
 
-# QQ Plot 
-qq <- wine_reviews %>%
-  wine_qq(price, "Price") + theme(plot.title = element_text(hjust = 0.5))
+  France may be the recognized standard, but Italy is somewhat unique in the world of wine. Smaller in size than both France and California, Italy often leads the world in wine production with some of the very best wines on the planet. Italian wines are specifically produced to be enjoyed with food and that is typically how they are experienced. Wine is at the center of Italian life, vines can be seen growing all over the countryside and no meal, big or small, is complete without being paired with one or more of the over one thousand wines produced in Italy (McCarthy, et al., 2019). The ubiquitous presence of wines generally throughout Italy has resulted in it being minimized with respect to quality and somewhat taken for granted by those privileged to enjoy it on such a regular basis.  
+  
+  Italy, similar to France, has developed a system to classify and codify wine-making throughout the country’s wine-producing regions and districts. There are three regions considered the most renowned for wine-producing in Italy: Piedmont, Tuscany, and the Veneto. Italian wine-makers have by far the widest variety of grapes to choose from compared to any other country in the world, with greater than four hundred of the over one thousand varieties used in wine production. Italian wines most often are made from grapes native to Italy and, if transplanted to other areas of the world with different soil and climate, tend not to perform as well and consequently result in lesser quality wines. For this reason, many of the best grapes used to produce exceptional wines in Italy are scarcely known in other countries (McCarthy, et al., 2019).  
+  
+  Italian wines, as Old World wines, are typically named for the area of its origin rather than by the grapes used in its production. For example, Chianti, named for a rural district in Tuscany, is made from a blend of Sangiovese, Canaiolo, and other grapes. Italian wines generically fall into two groups, the casual, everyday drinking varieties and the “better” wines fit for fine dining and collecting, like Barolo and Brunello di Montalcino from Piedmont and Tuscany, respectively. Officially, Italy follows the European Union system and produces wines belonging to two categories, Denominazione di Origine Controllata e Garantita (DOCG) and Denominazione di Origine Controllata (DOC). The former category includes more elite wines and translates as “regulated and guaranteed place-name,” while the latter translates as “regulated place-name” and includes more common-place wines (McCarthy, et al., 2019).  
 
-# Histogram 
-hist <- wine_reviews %>% 
-  wine_hist(price, "Price", bins = 12, fill = "#ffd1d1", col = "#811f1f") + theme(plot.title = element_text(hjust = 0.5))
-
-lay <- rbind(c(1,2), c(1,3))
-grid.arrange(grobs = list(hist, qq, box), layout_matrix = lay)
-
+```{r Italy)}
+# Italy
+wine_heat(it_region_count$region, it_region_count$count, it_topo, it_geojson)
 ```
 
-### Graphical Representation of Year
-```{r Normality II}
+#### _United States:_  
+
+  Wine-making in the United States can be traced to the establishment of Spanish missions in Southern California. Although these original grapevines exist, much of the California wine business has moved to the North. The United States is now home to several established wine regions including Washington State, Oregon, New York, and Virginia. Still none of these compare to the Northern California wine-producing regions of Napa Valley and Sonoma.  
+  
+  Commercial wine production in the United States is a relatively young enterprise dating only to the 1960’s. At that time, 256 wineries operated in California compared to nearly five thousand in 2016, a number five times that which existed in 1996, evidence of the rapid growth of the industry. Today all fifty states play host to wineries, but California is by any measure the largest wine-producing region in North America.  
+  
+  Wine producers in the United States, more specifically in California for the purpose of this study, have what could be considered an advantage in that they are free from the traditional restrictions and regulations levied on Old World winemakers. For instance, California vineyards can choose to plant any grape at any location and produce a wine using the methodology they desire. In truth, there does exist an appellation system for wines produced in the United States. The American Viticultural Areas (AVA) simply establishes geographical boundaries to identify vineyard regions and does not limit producers like the laws of the Old World. Furthermore, California wines, like others from New World regions, tend to celebrate the variety of grapes used in making wine. New World wine producers have brought famous grape varieties like Pinot Noir, Merlot, Cabernet Sauvignon and Chardonnay, once hidden behind regional designations, to the forefront (McCarthy, et al., 2019).  
+  
+```{r California}
+
+wine_heat(ca_county_count$county, ca_county_count$count, ca_topo, ca_geojson)
+```
+
+## Dataset 
+
+### _Description:_
+
+The Wine Reviews dataset utilized in this project was retrieved from Kaggle.com, the original source stems back to a data pull from WineEnthusiast on November 22, 2017. This dataset contains approximately 130,000 reviews and 13 variables:  
+
+* Location Data: Geographical data on production
+  + Country
+  + Province
+  + Region
+  + Sub-region
+* Description: Explanation of flavor
+* Designation: The vineyard within the winery where the grapes that made the wine originated.
+* Points: Quality point rating assigned by the wine reviewer. The database only includes wines that review at 80 points or higher.
+* Price: Cost per bottle
+* Wine Reviewer Information:
+* Tester name
+  + Tester’s Twitter username
+  + Title: Title of wine review
+* Variety: Name of wine
+* Winery: The winery that made the wine
+
+### _Limitations:_  
+
+  Exploratory Data Analysis (EDA) revealed several things about the viability of the dataset. Our preliminary research suggested a skew existed: WineEnthusiast only includes wines that rank between 80 - 100 points. As most wines are not native to the United States, additional information such as reviewer data, and grape consistency data could bridge the gap to create a comprehensive analysis.  
+  
+**Reviewer Data:** Currently, the wine dataset includes limited data on the reviewer: name and twitter username. Limited to just this information, we are unable to justify if a certain demographic will rate certain wines differently. For example, in a zzysh’s Wine Magazine article titled “Wine Preference is Individual, Not Male or Female,” Kendall Montgomery debunks a prominent stereotype that women tend to prefer “lighter, sweeter wines” while men “prefer big, bold, and prestigious” wines. (Montgomery)  Through a study by California Polytechnic State University titled ‘GENDER PREFERENCES IN WINE MARKETING’, we learned there was not much of a difference in gender preferences when purchasing a bottle of wine. The top three things both genders preferred were brand named wines, style of wine, and variety in wine. (Lombardo, 2012) Additionally, we learned that wines are more popular with married and full-time employed individuals than any other category. (Lombardo, 2012) Understanding the reviewer demographics allows the stakeholder to identify preference biases to justify review.  
+
+**Grape Data:** To summarize what has been described previously, the difference in production and labeling systems between Old World and New World wines complicates the ability to compare the wines laterally. Old World wines tend to be labeled by the region the wine was produced (e.g. Bordeaux) and may be the product of a single grape or blend of multiple varieties. In many cases, the identity of the specific grape varieties used in Old World wines is not provided. New World wines may be the product of a single grape (e.g. Pinot Noir) or a blend, but they are typically named for the grape or grapes used and not the region of their origin.
+
+## SMART Research Question 
+
+### _How do New World wines compare with those of the Old World on the basis of quality and price:_  
+
+  With wine being such a lucrative business historically, there is a wide range of literature and studies surrounding the commodity. In particular, the following three studies have influenced and shaped our project:
+
+1. [IE Students Winemag Analysis](https://www.kaggle.com/natashasavc/ie-students-winemag-analysis)
+2. [Wine Data Explore](https://www.kaggle.com/graeme16161/wine-data-explore)
+3. [Wine Reviews EDA and Province Prediction using H2O](https://www.kaggle.com/strangemane/wine-reviews-eda-and-province-prediction-using-h2o)  
+
+  Prior to the exploratory phase, we were interested in identifying the ‘best wine at the best price’ based on WineEnthusiast reviews. However, EDA revealed the question was too broad, requiring us to further narrow down the research question.  
+  
+  Effort was made to prevent Type I and Type II errors by choosing a dataset of adequate size to allow for exploration of the SMART question. We decided to filter the dataset to observe which countries had the most data available - the top five are displayed (Fig 1a). The United States, France, and Italy evidently composed nearly 75% of all the reviews and so we narrowed our focus to these three countries. Specifically for the United States, California alone was chosen due the abundance of reviews that came out of the state compared to other US states (Fig 1b). As a result, it was decided to define Old World wines as those produced in France and Italy, and New World wines as those made in California. Thus, the formation of our research question: _On average are wines produced in New World rated higher than that of the Old World?_
+  
+### Results
+
+  The initial glance through our dataset allowed us to start creating a platform for brainstorming, it wasn't until our EDA was complete that we were able to get a thorough understanding of the insights our dataset housed. Due to the large size of our dataset, it is impossible to go through each observation in a timely manner. Through our EDA we learned the following about our dataset:  
+  
+```{r Normality I}
 # Box Plot 
 box <- wine_reviews %>%
   wine_box(year, title = "Year", fill = "#ffd1d1", col = "#811f1f") + theme(plot.title = element_text(hjust = 0.5))
@@ -185,8 +230,27 @@ lay <- rbind(c(1,2), c(1,3))
 grid.arrange(grobs = list(hist, qq, box), layout_matrix = lay)
 ```
 
+  Upon removing outliers, we learned that the majority of our reviews occured between 2004 and 2016 with a median year of 2012 and mean of 2011 (Fig 2a). The important thing to keep in mind here is that while the dataset provides a recorded year in the observation, it simply means that the wine was reviewed in that year and not necessarily made that year.  
+  
+```{r Normality II }
+# Box Plot 
+box <- wine_reviews %>%
+  wine_box(price, title = "Price", fill = "#ffd1d1", col = "#811f1f") + theme(plot.title = element_text(hjust = 0.5))
 
-### Graphical Representation of Points  
+# QQ Plot 
+qq <- wine_reviews %>%
+  wine_qq(price, "Price") + theme(plot.title = element_text(hjust = 0.5))
+
+# Histogram 
+hist <- wine_reviews %>% 
+  wine_hist(price, "Price", bins = 12, fill = "#ffd1d1", col = "#811f1f") + theme(plot.title = element_text(hjust = 0.5))
+
+lay <- rbind(c(1,2), c(1,3))
+grid.arrange(grobs = list(hist, qq, box), layout_matrix = lay)
+```
+
+  In the raw data pull, the most expensive bottle of wine in our dataset was \$3,300 with a wine quality point rating at 88. However, it was observations such as the aforementioned that was causing a skew in the data due to the lack of frequency. The lack of frequency in that particular wine disables us from making a conclusion when comparing wine to price. As a result, we removed such outliers creating a dataset with a cost range of \$4-\$79 with a median cost of \$25 and a mean cost of \$29.11.  
+  
 ```{r Normality tests III}
 # Box Plot 
 box <- wine_reviews %>%
@@ -204,21 +268,17 @@ lay <- rbind(c(1,2), c(1,3))
 grid.arrange(grobs = list(hist, qq, box), layout_matrix = lay)
 ```
 
-*Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed dapibus tempor elit, vitae porta nisl tempor sit amet. Phasellus in eleifend nulla, sit amet luctus libero. Duis fermentum magna vel nulla accumsan, sed porttitor dui rutrum. Ut eu leo rutrum, accumsan quam quis, gravida diam. Aliquam consequat odio vitae nulla efficitur facilisis. Cras eget enim fringilla, volutpat dui et, cursus elit. Aenean finibus fringilla eros, sed porttitor erat volutpat id. Aenean vel faucibus turpis. Sed egestas lorem id ornare dapibus. Praesent vulputate blandit risus, id ultricies elit eleifend vel.*
+  As discussed at length previously, WineEnthusiast only houses wine data that rank at 80 quality points or above. Throughout exploratory data analysis we learned that we had no wines that ranked above 98 points, making the wine quality range for this dataset 80-98 points. This dataset also saw a median score of 88 points and a mean score of 88.44 points. Discussed in the limitation section of this paper is wine reviewer biases. In order to compare how wines compare between the two regions, we believe it is important that we understand the background and character of people reviewing these wines to understand favorability and wine preference.  
+  
+  Understanding our dataset through the lens of year, wine quality points, and the cost of wine, we were able to proceed forward with the development of a SMART question and preliminary analysis of how the wines of the old world will compare with the new world. Through exploratory data analysis, we learned that the majority of the wines in this dataset were reviewed between 2004-2016 with an average wine quality point of 88.44 and an average cost of wine at $29.11. With these insights, we set a working hypothesis that the most expensive wine is not necessarily the best wine. We will further explore this analysis in the following sections of this paper.
 
 ## Inferential Statistics
 
-*Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed dapibus tempor elit, vitae porta nisl tempor sit amet. Phasellus in eleifend nulla, sit amet luctus libero. Duis fermentum magna vel nulla accumsan, sed porttitor dui rutrum. Ut eu leo rutrum, accumsan quam quis, gravida diam. Aliquam consequat odio vitae nulla efficitur facilisis. Cras eget enim fringilla, volutpat dui et, cursus elit. Aenean finibus fringilla eros, sed porttitor erat volutpat id. Aenean vel faucibus turpis. Sed egestas lorem id ornare dapibus. Praesent vulputate blandit risus, id ultricies elit eleifend vel.*
+### Boxplots
 
-#### Bartlett Test Of Homogeneity Of Variance
-```{r Bartlett}
-# Bartlett 
-big_wine <- wine_reviews %>% filter(country %in% c("Italy", "France", "US")) 
-bartlett.test(big_wine$points, big_wine$country) 
-```
-
-####  Density by Region
-```{r Density by Region }
+  The boxplot below illustrates the point distribution of the wines reviewed in all three of our regions of interest (Fig 10). Given that WineEnthusiast only reviews wines that scored 80 points or more, the distribution ranges between a minimum score of 80 and maximum score of 100 points. The plot, however, shows that wines reviewed from both the Old World and the New World score about the same in all regions, with the median bottle scored around 86 points.
+  
+```{r}
 # Renamed variables 
 wine_reviews <- wine_reviews %>% 
   mutate(region  = case_when(
@@ -226,34 +286,20 @@ wine_reviews <- wine_reviews %>%
     country == "France" ~ "France", 
     country == "Italy" ~ "Italy"))
 
-# Hist 
-wine_reviews %>% 
-  filter(!is.na(region)) %>% 
-  ggplot(aes(x = points, colour = region)) +
-  geom_density() + theme_minimal() + theme(text = element_text(size = 14),
-  legend.position = c(0.8, 0.5)) + labs(title = "Distribution of Points by Region") + geom_vline(aes(xintercept= mean(points), color = region),
-  linetype="dashed") + theme(plot.title = element_text(hjust = 0.5))
-``` 
+# compare across country
 
-The below boxplot illustrates the point distribution of the wines reviewed in all three of our regions of interest. Given that WineEnthusiast only reviews wines that score 80 points or more, the distribution lies between 80 and 100 points. The plot, however, shows that wines reviewed from both the Old World and the New World score about the same in all regions.
-
-#### Box Plots by Region
-```{r Box Plots by Region}
-# compare accross country
 wine_reviews %>% 
   filter(!is.na(region)) %>% 
   ggplot(aes(x = region, y = points)) + 
   geom_boxplot(aes(color = region)) + 
-  scale_color_manual(values = c("#F768A1", "#C51B8A","#7A0177")) + 
-  labs(title = "Points by Region", x = "Region", y = "Points") + 
+  scale_color_manual(values = c("#00AFBB", "#E7B800", "#FC4E07")) + 
+  labs(title = "Points by Region", x = "Points", y = "Region") + 
   theme_minimal() + theme(plot.title = element_text(hjust = 0.5))
 ```
 
-We chose to use the below boxplots to compare the price distribution of Old World and New World wines by points. Seemingly, the more expensive the wine, the more highly rated it is across all regions investigated, suggesting that a wine’s price may have an effect on how well it is scored.
-
-#### Box Plots by Price Bucket
-```{r Box Plots by Price Bucket}
-
+  Due to the level of analysis required to constructively analyze the impact of price and quality (points) on wines from Old World and the New World, a more granular inspection is required. To best analyze the point distribution, the following price bins were created: >\$15, \$15 to \$29, \$30 to \$44, \$45 to \$60, and >\$60 **(Fig #)**. Seemingly, the results suggest a positive correlation between cost and quality points for all regions investigated.  
+  
+```{r}
 # subset by group 
 wine_reviews <- wine_reviews %>% 
  mutate(price_bucket = case_when(
@@ -281,8 +327,8 @@ ca <- wine_reviews %>%
 it <- wine_reviews %>% 
   filter(region == "Italy") %>% 
   ggplot(aes(x = price_bucket, y = points)) + labs(title = "Italy", x = "Price", y = "Points") +
-  geom_boxplot(aes(col = price_bucket)) + 
-  scale_color_manual(values = pallet) +
+  geom_boxplot(aes(col = price_bucket, fill = price_bucket, alpha = 0.15)) + 
+  scale_color_manual(values = pallet) + scale_fill_manual(values = pallet) +
   theme_minimal() + theme(legend.position = "none") + theme(plot.title = element_text(hjust = 0.5))
 
 fr <- wine_reviews %>% 
@@ -295,85 +341,135 @@ fr <- wine_reviews %>%
 ca 
 it 
 fr
+
 ```
 
-### Two Sample T-Test
-```{r Two Sample T-Test}
+### ANOVA
+
+  Recall our SMART research question **are wines grown in the New World (i.e., California) rated higher on average than wine grown in the Old World (i.e., France and Italy)**. To determine whether the average wine scores were the same between California, France, and Italy, we were interested in conducting a one way ANOVA test. Before doing so we attempted to validate each of the ANOVA assumptions of normality, homogeneity and independent errors. To visualize the distribution of points for each region we created a density plot displayed in **figure #**. Notice that each of the lines are approximately normal, verifying the first assumption. However, notice the points distribution in California is significantly flatter than Italy's. The Barlett's test displayed in **figure #** that the variance of wine scores among each region is different, violating the second ANOVA assumption. Furthermore, we believe in the existence of clustered errors in this dataset (e.g., scores of wines produced by the same vineyard are likely correlated). Since the ANOVA was no longer a viable option we opted to conduct a series of two-sample t-tests.
+
+```{r Anova }
+# subset 
+big_wine <- wine_reviews %>% 
+  filter(country %in% c("Italy", "France", "US")) 
+
+# anova 
+anova_results <- aov(points ~ country, data = big_wine)
+summary(anova_results) 
+```
+```{r Bartlett}
+# Bartlett 
+big_wine <- wine_reviews %>% filter(country %in% c("Italy", "France", "US")) 
+bartlett.test(big_wine$points, big_wine$country) 
+```
+
+```{r Overlayed Histagram}
+# Renamed variables 
+wine_reviews <- wine_reviews %>% 
+  mutate(region  = case_when(
+    province == "California" ~ "California",
+    country == "France" ~ "France", 
+    country == "Italy" ~ "Italy"))
+
+# Hist 
+wine_reviews %>% 
+  filter(!is.na(region)) %>% 
+  ggplot(aes(x = points, colour = region)) +
+  geom_density() + theme_minimal() + theme(text = element_text(size = 14),
+  legend.position = c(0.8, 0.5)) + labs(title = "Distribution of Points by Region") + geom_vline(aes(xintercept= mean(points), color = region),
+  linetype="dashed")
+
+``` 
+
+### Two-Sample T-Test 
+
+We conducted two two-sample t-tests comparing California and Italy and California and France. Both the tests and their associated density plots are displayed in **figures # through #**. Both two-sample t-tests rejected the null hypothesis of equal means at the one percent level. Although the means are significantly different, the density plots reveal that the mean points of wines grown in each region are very similar, often within 0.1 points. Since the average wine score within each region is similar, this result suggests that the region where a wine is grown may not be a strong predictor of its wine score. 
+
+```{r}
 
 california <- wine_reviews %>% filter(province == "California") 
 italy <-  wine_reviews %>% filter(country == "Italy")
 france <-  wine_reviews %>% filter(country == "France")
 
-# -----------------------------------------------------------
-# France vs. California 
-# -----------------------------------------------------------
-
 # tests 
+t.test(california$points, italy$points, var.equal = F) 
 t.test(california$points, france$points, var.equal = F) 
 
-# density 
-wine_reviews %>% 
+# histograms 
+p1 <- wine_reviews %>% 
   filter(region %in% c("France", "California")) %>% 
-  ggplot(aes(x = points, color = region)) +
+  ggplot(aes(x = points, colour = region)) +
   geom_density() + theme_minimal() + theme(text = element_text(size = 14),
-  legend.position = c(0.8, 0.5)) + labs(title = "Distribution of Points by Region") +
-  geom_vline(aes(xintercept= mean(points), color = region),
+  legend.position = c(0.8, 0.5)) + labs(title = "Distribution of Points by Region") + geom_vline(aes(xintercept= mean(points), color = region),
   linetype="dashed")
 
-# -----------------------------------------------------------
-# Italy vs. California 
-# -----------------------------------------------------------
-
-# T-test 
-t.test(california$points, italy$points, var.equal = F) 
-
-# Density Plot 
-wine_reviews %>% 
+p2 <- wine_reviews %>% 
   filter(region %in% c("Italy", "California")) %>% 
   ggplot(aes(x = points, colour = region)) +
   geom_density() + theme_minimal() + theme(text = element_text(size = 14),
   legend.position = c(0.8, 0.5)) + labs(title = "Distribution of Points by Region") + geom_vline(aes(xintercept= mean(points), color = region),
   linetype="dashed")
 
-
+grid.arrange(p1, p2, ncol = 1)
 ```
 
+### Regression 
 
-## Results & Discussion 
+We estimate the following model to better understand the effect of the region where a bottle of wine is produced on the score of a bottle of wine holding other factors constant.
 
-### Regional Distribution of Reviews by Wine Origin
+$$points = \beta_{0} + \beta_{1}*region + \beta_{2}*year + \beta_{3}*price + e$$ 
 
-We visualized where the wines reviewed originated from in each of the three regions investigated in this study in the below maps. Using the `leaflet` package, maps were made to divide the Old World Countries into regions; New World into counties (this was due to a constraint on resources and future work will map the New World wines by region). The quantity in each division can be seen by mousing-over it on the map - the darker the division, the more wine reviews came from it.
+where points is equal to wine's score, region is equal to either California, France, or Italy and price is measured in dollars. Both year and price are demeaned (i.e., the mean price and year have been subtracted from each observation in the sample) to easily interpret the intercept our model specification. Thus, we may interpret the intercept as the average score of a wine grown in California priced at roughly 32 dollars produced in 2011. The regression table is displayed in **figure #**. The region, year, and price variables are all statistically significant at the one percent level. Wines grown in France and Italy are rated 0.354 and 0.260 points higher than wines produced in California respectively. Also, the table suggests a one year increase in a wine's age is associated with a 0.176 point decrease in score. Similarly, a one-dollar increase in price is associated with a 0.097 increase in points. 
 
-#### California
-```{r California}
+The model is consistent with similar statistics and figures discussed earlier in the paper and raise questions with regards to the effect of year on points. Similar to the two-sample t-test and box plots measuring points between California, Italy, and France, the regression table suggests that the region doesn't have a meaningful effect on wine scores when comparing the world's best wine regions. A 0.354 point increase in less than a one percent increase (form the average California wine with 88.3 points) and likely would not persuade a consumer exclusively interested in choosing wines based on points. Also, notice the coefficient   $\beta_{2}$ for $year$ is  positive. This result is surprising because aging, the process of storing wine before it is bottled, is associated with am improvement in taste and flavor over time. However, the coefficient suggests that wine produced in 2010 is roughly 2 points higher than wine produced in 1990 on average, which could be a meaningful difference for consumers. We look forward to building models with more of the variables available in our dataset and with other methods such as interaction terms, fixed effects, and difference and difference. 
 
-wine_heat(ca_county_count$county, ca_county_count$count, ca_topo, ca_geojson)
+```{r}
+
+model <- wine_reviews %>%
+  mutate(
+    year_demeaned = year - 2011.146, 
+    price_demeaned = price - 31.91123) %>% 
+  filter(region %in% c("Italy", "France", "California")) %>% 
+  lm(formula = points ~ region + price_demeaned + year_demeaned) 
+
+summary(model) %>% 
+  xtable() %>% 
+  kable(digits = 3) %>%
+  kable_styling(bootstrap_options = "striped", full_width = F,
+  position = "left")
 ```
 
-#### France
-```{r France}
-# France
-wine_heat(fr_region_count$region, fr_region_count$count, fr_topo, fr_geojson)
-```
+## Discussion
 
-#### Italy
-```{r Italy)}
-# Italy
-wine_heat(it_region_count$region, it_region_count$count, it_topo, it_geojson)
-```
-*Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed dapibus tempor elit, vitae porta nisl tempor sit amet. Phasellus in eleifend nulla, sit amet luctus libero. Duis fermentum magna vel nulla accumsan, sed porttitor dui rutrum. Ut eu leo rutrum, accumsan quam quis, gravida diam. Aliquam consequat odio vitae nulla efficitur facilisis. Cras eget enim fringilla, volutpat dui et, cursus elit. Aenean finibus fringilla eros, sed porttitor erat volutpat id. Aenean vel faucibus turpis. Sed egestas lorem id ornare dapibus. Praesent vulputate blandit risus, id ultricies elit eleifend vel.*
+### _Findings:_  
 
-## Conculsion 
+  The purpose of this study was to investigate the ability to determine the best quality wine at the best price point based on reviews from Wine Enthusiast Magazine. Following Exploratory Data Analysis of our dataset and the discovery of biases it became apparent that this approach would not meet the specifications of a SMART question and would thus need to be refined. Based on limitations in our dataset we narrowed our question to "how does New World wine compare to that of the Old World" with Old World defined as France and Italy, and New World defined as California. Italy produced the most wine per metric ton annually, however, the United States has the greatest number of reviews available for analysis. It may be important to note that Wine Enthusiasts Magazine only reviews wines with a quality score of 80 or above, suggesting more United States Wines meet this criteria than wines produced in other regions. Not surprisingly, although there were many wines below $25.00 per bottle that ranked in the upper quartiles of wine quality, our data suggests that quality by score increases with increased price in a statistically significant manner.  
+  
+### _Next Steps:_  
 
-*Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed dapibus tempor elit, vitae porta nisl tempor sit amet. Phasellus in eleifend nulla, sit amet luctus libero. Duis fermentum magna vel nulla accumsan, sed porttitor dui rutrum. Ut eu leo rutrum, accumsan quam quis, gravida diam. Aliquam consequat odio vitae nulla efficitur facilisis. Cras eget enim fringilla, volutpat dui et, cursus elit. Aenean finibus fringilla eros, sed porttitor erat volutpat id. Aenean vel faucibus turpis. Sed egestas lorem id ornare dapibus. Praesent vulputate blandit risus, id ultricies elit eleifend vel.*
+  As all data science projects, there is more work to be done. To identify any biases and ensure a robust conclusion, we would like to assess this dataset in two additional aspects: cluster control and assess the impact of climate on wine production. Initially, to be able to manage such a large dataset we narrowed down our search to the countries with the most wine reviews with the idea that a larger sample size will allow us to prevent Type I and II errors. As a result we framed our question around the results of our EDA. However, from the data we parsed to the side, we believe we can find valuable information about how wines from different parts of the world compare. The key driver for this topic can be derived from understanding the climate around the world in which wine is produced.
+  
+![World Climate](images/world_climate.png)
 
-## References 
+  Temperatures in certain locations result in varying ripening opportunities during wine production. High levels of acidity are a result of the lack of ripening due to the cooler temperatures, whereas, in warmer temperatures, grapes ripen reasonably easily, resulting in the lower acidity, higher sugar, and darker colors (Stern, 2018). Similarly, this leads to areas with cooler temperatures producing quality, fruity, white wines and regions with warmer temperatures fermenting wines with more of a tartier taste (Stern, 2018). Through analyzing the impact of temperature would allow a rudimentary analysis of an elementary component of wine: the quality of the grapes.
+  
+## References
 
-*Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed dapibus tempor elit, vitae porta nisl tempor sit amet. Phasellus in eleifend nulla, sit amet luctus libero. Duis fermentum magna vel nulla accumsan, sed porttitor dui rutrum. Ut eu leo rutrum, accumsan quam quis, gravida diam. Aliquam consequat odio vitae nulla efficitur facilisis. Cras eget enim fringilla, volutpat dui et, cursus elit. Aenean finibus fringilla eros, sed porttitor erat volutpat id. Aenean vel faucibus turpis. Sed egestas lorem id ornare dapibus. Praesent vulputate blandit risus, id ultricies elit eleifend vel.*
+Kaggle.com. 130k wine reviews with variety, location, winery, price, and description. Retrieved from [https://www.kaggle.com/zynicide/wine-reviews](https://www.kaggle.com/zynicide/wine-reviews)
+
+J. Robinson (ed) "The Oxford Companion to Wine" Third Edition pg 593 Oxford University Press 2006 [ISBN 0-19-860990-6](https://en.wikipedia.org/wiki/Special:BookSources/0-19-860990-6)
+
+McCarthy, E., and Ewing-Mulligan, M. (2019). Wine For Dummies, 7th Edition. John Wiley & Sons, Inc, Hoboken, NJ. [www.wiley.com](www.wiley.com)
+
+Lombardo, C. (2012). Retrieved from [https://pdfs.semanticscholar.org/85b9/4cfbc70b6e10c659a79f48d877974bddb11a.pdf](https://pdfs.semanticscholar.org/85b9/4cfbc70b6e10c659a79f48d877974bddb11a.pdf)
+
+Montgomery, K. (n.d.). Wine Preference is Individual, Not Male or Female. Wine Magazine by Zzyh. Retrieved from [https://us.zzysh.me/blog/wine-preferences-not-male-female/](https://us.zzysh.me/blog/wine-preferences-not-male-female/)
+
+Stern, P. (2018, January 18). How Weather And Climate Affect Wine. Retrieved March 14, 2020 from [https://www.wtso.com/blog/how-weather-and-climate-affect-wine/](https://www.wtso.com/blog/how-weather-and-climate-affect-wine/)
 
 ## Supplemental Figures
-A scatter plot of price vs. points.
+
+### A scatter plot of price vs. points.
 ```{r Scatter Plot}
 # price  vs. points grouped by region (not so informative)
 wine_reviews %>%
