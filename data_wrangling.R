@@ -29,6 +29,16 @@ library(googleway) # used to convert lat and long to elavation
 
 raw_wine_reviews.df <- read.csv("data/winemag-data-130k-v2.csv") 
 
+# ===============================================================================
+# Year 
+# ===============================================================================
+
+wine_reviews.df <- raw_wine_reviews.df %>%
+  mutate(
+    year = as.integer(str_extract(title, "\\-*\\d+\\.*\\d*")),
+    year = ifelse(year > 1950 & year < 2017, year, NA)
+  ) 
+
 # =============================================================================
 # Red or White 
 #   Create variable that categorizes wine variety into one of two
@@ -60,7 +70,7 @@ white.v <- c(
 )
 
 # create color variable 
-wine_reviews.df <- raw_wine_reviews.df %>%
+wine_reviews.df <- wine_reviews.df %>%
   mutate(color = case_when(
     variety %in% red.v ~ "red",
     variety %in% white.v ~ "white"
