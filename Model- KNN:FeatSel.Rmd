@@ -1,0 +1,93 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+```{r}
+knitr::opts_chunk$set(warning = F, results = 'markup', message = F)
+options(scientific=T, digits = 3) 
+
+loadPkg = function(pkg, character.only = FALSE) { 
+  if (!character.only) { pkg <- as.character(substitute(pkg)) }
+  pkg <- ifelse(!character.only, as.character(substitute(pkg)) , pkg)  
+  if (!require(pkg,character.only=T, quietly =T)) {  install.packages(substitute(pkg),dep=T); if(!require(pkg,character.only=T)) stop("Package not found") } 
+}
+loadPkg(knitr)
+# unload/detact package when done using it
+unloadPkg = function(pkg, character.only = FALSE) { 
+  if(!character.only) { pkg <- as.character(substitute(pkg)) } 
+  search_item <- paste("package", pkg,sep = ":") 
+  while(search_item %in% search()) { detach(search_item, unload = TRUE, character.only = TRUE) } 
+}
+
+loadPkg("tidyverse")
+loadPkg("factoextra")
+
+winedata <- data.frame(read.csv("winemag-data-130k-v2.csv"))
+wine1 <- na.omit(winedata)
+wine2 <- wine1[ -c(1,3,11,12) ]
+str(wine2)
+```
+
+# Remove Outliers
+```{r}
+outliers <- boxplot(wine2$price, plot=FALSE)$out
+wine2[which(wine2$price %in% outliers),]
+
+wine2<- wine2[-which(wine2$price %in% outliers),]
+boxplot(mtcars$disp)
+```
+
+
+```{r}
+wine2$country<- as.numeric(wine2$country)
+wine2$province<- as.numeric(wine2$province)
+wine2$taster_name<- as.numeric(wine2$taster_name)
+wine2$region_1<- as.numeric(wine2$region_1)
+wine2$region_2<- as.numeric(wine2$region_2)
+wine2$points<- as.numeric(wine2$points)
+wine2$designation<- as.numeric(wine2$designation)
+wine2$variety<- as.numeric(wine2$variety)
+wine2$winery<- as.numeric(wine2$winery)
+str(wine2)
+```
+
+###K-Means
+
+```{r}
+set.seed(1000)
+wine <- scale(wine2)
+head(wine)
+
+
+# function to compute total within-cluster sum of square
+wss <- function(k) {
+  kmeans(wine, k, nstart = 10 )$tot.withinss
+}
+
+# Compute and plot wss for k = 1 to k = 15
+k.values <- 1:15
+
+# extract wss for 2-15 clusters
+wss_values <- map_dbl(k.values, wss)
+
+plot(k.values, wss_values,
+       type="b", pch = 19, frame = FALSE,
+       xlab="Number of clusters K",
+       ylab="Total within-clusters sum of squares")
+
+k <- kmeans(wine, centers = 4, nstart = 25)
+print(k)
+
+# plots to compare
+fviz_cluster(k, geom = "point",  data = wine) + ggtitle("k = 4")
+
+# https://uc-r.github.io/kmeans_clustering
+```
+
+
+###Feature Selection
+```{r}
+
+```
