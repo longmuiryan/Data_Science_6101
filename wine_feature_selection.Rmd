@@ -1,0 +1,100 @@
+---
+title: "Wine Feature Selection"
+author: "Ryan Longmuir"
+date: "4/16/2020"
+output:
+  html_document:
+    code_folding: hide
+    number_sections: true
+    toc: yes
+    toc_depth: 3
+    toc_float: yes
+---
+
+
+```{r setup, include = FALSE} 
+
+knitr::opts_chunk$set(warning = F, message = F)
+options(scientific=T, digits = 3) 
+
+```
+
+
+```{r packages & functions , include = F}
+
+# -----------------------------------------------------------------------------
+# loadPkg 
+# -----------------------------------------------------------------------------
+
+loadPkg = function(pkg, character.only = FALSE) { 
+  if (!character.only) { pkg <- as.character(substitute(pkg)) }
+  pkg <- ifelse(!character.only, as.character(substitute(pkg)) , pkg)  
+  if (!require(pkg,character.only=T, quietly =T)) { install.packages(substitute(pkg),dep=T); if(!require(pkg,character.only=T)) stop("Package not found") } 
+}
+
+# -----------------------------------------------------------------------------
+# packages 
+# -----------------------------------------------------------------------------
+
+loadPkg("tidyverse")
+loadPkg("kableExtra")
+loadPkg("corrplot")
+
+# ------------------------------------------------------------------------
+# plotting functions
+# ------------------------------------------------------------------------
+
+```
+
+### read in the data 
+
+```{r glance over the dataset}
+
+# read in dataset 
+raw_wine_reviews <- read.csv("data/wine_reviews.csv")
+
+# cleaning dataset 
+wine_reviews <- raw_wine_reviews %>%
+  mutate(
+    year = as.integer(str_extract(title, "\\-*\\d+\\.*\\d*")),
+    year = ifelse(year > 1950 & year < 2017, year, NA),
+    red = ifelse(color == "red", 1, 0), 
+    us = ifelse(country == "US", 1, 0)
+  ) %>%
+  mutate_at(vars(points, price, year), as.integer)
+
+# counting missing values 
+wine_reviews %>% summarise_all(function(x){sum(is.na(x))}) 
+
+# glimpse 
+wine_reviews %>% glimpse()
+
+```
+
+
+```{r corr plot}
+
+wine_reviews %>% 
+  select(points, price, year, red, us) %>% 
+  filter_all(function(x){!is.na(x)}) %>% 
+  cor() %>% corrplot.mixed()
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
