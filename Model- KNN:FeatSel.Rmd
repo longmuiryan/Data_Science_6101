@@ -21,6 +21,34 @@ unloadPkg = function(pkg, character.only = FALSE) {
   while(search_item %in% search()) { detach(search_item, unload = TRUE, character.only = TRUE) } 
 }
 
+
+loadPkg(xtable)
+loadPkg(kableExtra)
+loadPkg(stringi)
+
+xkabledply = function(modelsmmrytable, title="Table", digits = 4, pos="left", bso="striped") { 
+
+  modelsmmrytable %>%
+    xtable() %>% 
+    kable(caption = title, digits = digits) %>%
+    kable_styling(bootstrap_options = bso, full_width = FALSE, position = pos)
+}
+
+xkablesummary = function(df, title="Table: Statistics summary.", digits = 4, pos="left", bso="striped") { 
+
+  s = summary(df) %>%
+    apply( 2, function(x) stringr::str_remove_all(x,c("Min.\\s*:\\s*","1st Qu.\\s*:\\s*","Median\\s*:\\s*","Mean\\s*:\\s*","3rd Qu.\\s*:\\s*","Max.\\s*:\\s*")) ) %>% 
+    apply( 2, function(x) stringr::str_trim(x, "right")) # trim trailing spaces left
+  
+  colnames(s) <- stringr::str_trim(colnames(s))
+  
+  if ( dim(s)[1] ==6 ) { rownames(s) <- c('Min','Q1','Median','Mean','Q3','Max') 
+  } else if ( dim(s)[1] ==7 ) { rownames(s) <- c('Min','Q1','Median','Mean','Q3','Max','NA') }
+  
+  xkabledply(s, title=title, digits = digits, pos=pos, bso=bso )
+}
+
+
 loadPkg("tidyverse")
 loadPkg("factoextra")
 
@@ -33,23 +61,20 @@ wine <- winedata %>%
  #    dom = ifelse(country == "US", 1, 0)
  #  ) %>%
  dplyr::select(
-    points, price, year, taster_name, taster_following,
-    composite_el, composite_lat, composite_lon
+    points, price, year, taster_following,
+    comp_el, comp_lat, comp_lon
   ) %>% 
  mutate_all(as.numeric) %>% 
  filter_all(function(x){!is.na(x)}) 
 
 glimpse(wine)
 
-```
 
 # Remove Outliers
-```{r}
 outliers <- boxplot(wine$price, plot=FALSE)$out
-
 wine2<- wine[-which(wine$price %in% outliers),]
-```
 
+```
 
 ###K-Means
 
@@ -75,39 +100,112 @@ plot(k.values, wss_values,
        xlab="Number of clusters K",
        ylab="Total within-clusters sum of squares")
 
-k <- kmeans(wine2, centers = 6, nstart = 25)
+#nstart is just the number of configurations, we dont really need that
+k <- kmeans(wine2, centers = 5)
 print(k)
 
 # plots to compare
 fviz_cluster(k, geom = "point",  data = wine2) + ggtitle("k = 5")
 
+#Cluster Mean
 k$centers
+#Number of values in each cluster
 k$size
 
 # https://uc-r.github.io/kmeans_clustering
 ```
 
+
+```{r}
+
+# kable(summarize(k, type = 'numeric'),format = 'html') %>%
+#   kable_styling(bootstrap_options = c("striped", "hover"))
+# 
+# GroupsSummary <- describeBy(cluster.c[,1:10], cluster.c[,'Points'])
+# 
+# kable(GroupsSummary[[1]], format = "html", digits = 2) %>%
+#   kable_styling(bootstrap_options = c("striped", "hover"))
+
+cluster <- data.frame(k$cluster)
+
+ggplot(cluster, aes(x=variable, y=value)) +
+  geom_boxplot(aes(fill = Group),outlier.size = 1) +
+  facet_wrap( ~ variable, scales="free", ncol = 2) +
+  xlab(label = NULL) + ylab(label = NULL) + ggtitle("Boxplots for 3 Groups of Clients") +
+  guides(fill=guide_legend(title="Groups"))
+
+
+xkablesummary(wine2)
+
+wine_cluster_description_mean <- wine2 %>% 
+  mutate(Cluster = k$cluster) %>%
+  group_by(Cluster) %>%
+  summarize_all('mean')
+
+wine_cluster_description_mean
+
+wine_cluster_description_median <- wine2 %>% 
+  mutate(Cluster = k$cluster) %>%
+  group_by(Cluster) %>%
+  summarize_all('median')
+
+wine_cluster_description_median
+
+wine_cluster_description_max <- wine2 %>% 
+  mutate(Cluster = k$cluster) %>%
+  group_by(Cluster) %>%
+  summarize_all('max')
+
+wine_cluster_description_max
+
+wine_cluster_description_min <- wine2 %>% 
+  mutate(Cluster = k$cluster) %>%
+  group_by(Cluster) %>%
+  summarize_all('min')
+
+wine_cluster_description_min
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+_______________________________________________________________________________________________
+_______________________________________________________________________________________________
+
 ###Feature Selection
 ```{r}
-loadPkg("corrplot")
-loadPkg("leaps")
-loadPkg(faraway)
-loadPkg(car)
-
-corr <-cor(wine2) 
-corrplot(corr, type = "upper")
-
-reg1 <- regsubsets(wine2$points~. , data = wine2, nvmax = 9, nbest = 2, method = "exhaustive") 
-(summary(reg1))
-plot(reg1, scale = "adjr2", main = "Adjusted R^2")
-
-fit1 <- glm(wine2$points ~ points + price + year + taster_following + composite_el + composite_lat + composite_lon, data = wine2)
-summary(fit1)
-vif(fit1)
-plot(reg1, scale = "bic", main = "BIC")
-
-subsets(reg1, statistic="adjr2", legend = FALSE, min.size = 3, main = "Adjusted R^2")
-abline(a = 1, b = 1, lty = 2)  
+# loadPkg("corrplot")
+# loadPkg("leaps")
+# loadPkg(faraway)
+# loadPkg(car)
+# 
+# corr <-cor(wine2) 
+# corrplot(corr, type = "upper")
+# 
+# reg1 <- regsubsets(wine2$points~. , data = wine2, nvmax = 9, nbest = 2, method = "exhaustive") 
+# (summary(reg1))
+# plot(reg1, scale = "adjr2", main = "Adjusted R^2")
+# 
+# fit1 <- glm(wine2$points ~ points + price + year + taster_following + composite_el + composite_lat + composite_lon, data = wine2)
+# summary(fit1)
+# vif(fit1)
+# plot(reg1, scale = "bic", main = "BIC")
+# 
+# subsets(reg1, statistic="adjr2", legend = FALSE, min.size = 3, main = "Adjusted R^2")
+# abline(a = 1, b = 1, lty = 2)  
 ```
 
 
