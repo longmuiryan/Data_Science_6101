@@ -347,15 +347,15 @@ wine_reviews.df <- wine_reviews.df %>%
 
 wine_reviews.df <- wine_reviews.df %>%
   mutate(
-    composite_lon =
+    comp_lon =
       ifelse(!is.na(region_1_lon), region_1_lon,
         ifelse(!is.na(province_lon), province_lon,
           ifelse(!is.na(country_lon), country_lon, NA))),
-    composite_lat =
+    comp_lat =
       ifelse(!is.na(region_1_lat), region_1_lat,
         ifelse(!is.na(province_lat), province_lat,
           ifelse(!is.na(country_lat), country_lat, NA))),
-    composite_el =
+    comp_el =
       ifelse(!is.na(region_1_el), region_1_el,
         ifelse(!is.na(province_el), province_el,
           ifelse(!is.na(country_el), country_el, NA)))
