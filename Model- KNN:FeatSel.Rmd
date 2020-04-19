@@ -118,13 +118,13 @@ k$size
 
 ```{r}
 
-# kable(summarize(k, type = 'numeric'),format = 'html') %>%
-#   kable_styling(bootstrap_options = c("striped", "hover"))
-# 
-# GroupsSummary <- describeBy(cluster.c[,1:10], cluster.c[,'Points'])
-# 
-# kable(GroupsSummary[[1]], format = "html", digits = 2) %>%
-#   kable_styling(bootstrap_options = c("striped", "hover"))
+kable(summarize(k, type = 'numeric'),format = 'html') %>%
+  kable_styling(bootstrap_options = c("striped", "hover"))
+
+GroupsSummary <- describeBy(cluster.c[,1:10], cluster.c[,'Points'])
+
+kable(GroupsSummary[[1]], format = "html", digits = 2) %>%
+  kable_styling(bootstrap_options = c("striped", "hover"))
 
 cluster <- data.frame(k$cluster)
 
