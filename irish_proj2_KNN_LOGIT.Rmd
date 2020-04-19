@@ -36,14 +36,7 @@ knitr::opts_chunk$set(fig.width = 12, fig.height = 4,
 #source("eda_functions.R")
 #source("leaflet_map.R")
 
-#load packages 
-loadPkg(tidyverse)
-loadPkg(gridExtra)
-loadPkg(ggExtra)
-loadPkg(kableExtra)
-loadPkg(xtable)
-loadPkg(gganimate)
-loadPkg(dplyr)
+
 
 # load data 
 wine_reviews <- data.frame(read.csv("data/wine_reviews.csv"))
@@ -123,23 +116,45 @@ xkablevif = function(model) {
     kable_styling(position = "center") %>%
     kable_styling(bootstrap_options = "striped", full_width = F,
     position = "left")
+  
+  #load packages 
+loadPkg(tidyverse)
+loadPkg(gridExtra)
+loadPkg(ggExtra)
+loadPkg(kableExtra)
+loadPkg(xtable)
+loadPkg(gganimate)
+loadPkg(dplyr)
 }
 ```
 
 # KNN for wine_reviews
 ```{r subset features}
-wine2 <- subset(wine_reviews, select = c(country, points, price, province, variety, winery, year, color))
+wine2 <- subset(wine_reviews, select = c(country, points, price, province, year, color, taster_name, taster_following, composite_lon, composite_lat, composite_el))
 #nndf1 <- subset(nutrient_orig, select = c(8:45))
 
+wine2 <- wine2 %>%
+mutate(
+red = ifelse(color == "red", 1, 0),
+dom = ifelse(country == "US", 1, 0),
+p88 = ifelse(points > 88, 1, 0)
+) %>%
+dplyr::select(
+p88, price, year, red, dom, taster_following, taster_name,
+composite_lon, composite_lat, composite_el, p88
+)
 
-wine2$country<- as.numeric(wine2$country)
-wine2$points<- as.numeric(wine2$points)
-wine2$price<- as.numeric(wine2$price)
-wine2$province<- as.numeric(wine2$province)
-wine2$variety<- as.numeric(wine2$variety)
-wine2$winery<- as.numeric(wine2$winery)
-wine2$year<- as.numeric(wine2$year)
-wine2$color<- as.numeric(wine2$color)
+#wine2$dom<- as.numeric(wine2$dom)
+#wine2$p88<- as.numeric(wine2$p88)
+#wine2$price<- as.numeric(wine2$price)
+#wine2$province<- as.numeric(wine2$province)
+#wine2$year<- as.numeric(wine2$year)
+#wine2$red<- as.numeric(wine2$red)
+#wine2$taster_name<- as.numeric(wine2$taster_name)
+#wine2$taster_following<- as.numeric(wine2$taster_following)
+#wine2$composite_lon<- as.numeric(wine2$composite_lon)
+#wine2$composite_lat<- as.numeric(wine2$composite_lat)
+#wine2$composite_el<- as.numeric(wine2$composite_el)
 
 str(wine2)
 head(wine2)
@@ -152,12 +167,12 @@ xkablesummary(wine2)
 sum(is.na(wine2))
 #sum(is.na(wine2$country))
 #sum(is.na(wine2$points))
-sum(is.na(wine2$price))
+#sum(is.na(wine2$price))
 #sum(is.na(wine2$province))
 #sum(is.na(wine2$variety))
 #sum(is.na(wine2$winery))
-sum(is.na(wine2$year))
-sum(is.na(wine2$color))
+#sum(is.na(wine2$year))
+#sum(is.na(wine2$color))
 
 wine2 <- na.omit(wine2)
 
@@ -183,40 +198,107 @@ unloadPkg(psych)
 
 loadPkg(FNN)
 
-scaled_wine2 <- as.data.frame(scale(wine2[1:7], center = TRUE, scale = TRUE))
+wine2 <- wine2 %>% select(-p88, everything())
+wine2 <- wine2 %>% select(-taster_name, everything())
+#str(wine2)
+scaled_wine2 <- as.data.frame(scale(wine2[1:8], center = TRUE, scale = TRUE))
 
 set.seed(1000)
 wine2_sample <- sample(2, nrow(scaled_wine2), replace=TRUE, prob=c(0.75, 0.25))
 
-wine2_training <- scaled_wine2[wine2_sample==1, 1:7]
-wine2_test <- scaled_wine2[wine2_sample==2, 1:7]
+wine2_training <- scaled_wine2[wine2_sample==1, 1:8]
+wine2_test <- scaled_wine2[wine2_sample==2, 1:8]
+
 ```
 ```{r Y-labels}
 
-wine2.trainLabels <- wine2[wine2_sample==1, 8]
-wine2.testLabels <- wine2[wine2_sample==2, 8]
+wine2.trainLabels <- wine2[wine2_sample==1, 9]
+wine2.testLabels <- wine2[wine2_sample==2, 9]
+
 ```
 ```{r KNN model}
 
 # running the model 
 wine2_pred <- knn(train = wine2_training, test = wine2_test, cl=wine2.trainLabels, k=3)
-wine2_pred
+#wine2_pred
 loadPkg(gmodels)
 wine2PREDCross <- CrossTable(wine2.testLabels, wine2_pred, prop.chisq = FALSE)
+wine2PREDCross
+```
+```{r}
+loadPkg(gmodels)
+loadPkg(FNN)
+loadPkg(caret) 
 
+# create an empty dataframe to store the results from confusion matrices
+confusionMatrixResultDf = data.frame( k=numeric(0), Accuracy= numeric(0), Sensitivity=numeric(0), Specificity=numeric(0), Pos.Pred.Value=numeric(0), Neg.Pred.Value=numeric(0), Precision=numeric(0), Recall=numeric(0), F1=numeric(0), Prevalence=numeric(0), Detection.Rate=numeric(0), Detection.Prevalence=numeric(0), Balanced.Accuracy=numeric(0), row.names = NULL )
+
+for (kval in 3:15) {
+  #PimaPredict <- knn(train = zpima_Xtrain, test = zpima_Xtest, cl=zpima_ytrain, k=kval) 
+  wine2_pred <- knn(train = wine2_training, test = wine2_test, cl=wine2.trainLabels, k=kval)
+  #pimaXtable <- CrossTable(zpima_ytest, PimaPredict, prop.chisq = FALSE)
+  wine2PREDCross <- CrossTable(wine2.testLabels, wine2_pred, prop.chisq = FALSE)
+  print( paste("k = ", kval) )
+  #pimaXtable
+  wine2PREDCross
+  # 
+  #cm = confusionMatrix(PimaPredict, reference = zpima_ytest ) # from caret library
+  cm = confusionMatrix(wine2_pred, reference = factor(wine2.testLabels )) # from caret library
+  # 
+  cmaccu = cm$overall['Accuracy']
+  print( paste("Total Accuracy = ", cmaccu ) )
+  # 
+  cmt = data.frame(k=kval, Accuracy = cmaccu, row.names = NULL ) # initialize a row of the metrics 
+  cmt = cbind( cmt, data.frame( t(cm$byClass) ) ) # the dataframe of the transpose, with k valued added in front
+  confusionMatrixResultDf = rbind(confusionMatrixResultDf, cmt)
+  # print("Other metrics : ")
+}
+```
+```{r, results="asis"}
+xkabledply(confusionMatrixResultDf)
 ```
 
 
 # Logit for wine_reviews
 
-```{r Logit}
+```{r preparing the data}
+#create subset data frame - identical to wine2
+wine3 <- subset(wine_reviews, select = c(country, points, price, province, year, color, taster_name, taster_following, composite_lon, composite_lat, composite_el))
 
-logit_wine2 <- glm(points ~ ., data = wine2, binomial(link = "logit"))
-summary(logit_wine2)
-exp(coef(logit_wine2))
+wine3$country<- as.factor(wine3$country)
+wine3$points<- as.factor(wine3$points)
+wine3$price<- as.factor(wine3$price)
+wine3$province<- as.factor(wine3$province)
+wine3$variety<- as.factor(wine3$variety)
+wine3$winery<- as.factor(wine3$winery)
+wine3$year<- as.factor(wine3$year)
+wine3$color<- as.factor(wine3$color)
 
-confint(logit_wine2)
-confint.default(logit_wine2)
+#remove NAs
+wine3 <- na.omit(wine3)
+
+sum(is.na(wine3))
+
+#display df structure
+str(wine3)
 
 
+```
+```{r Logit country}
+
+#logit_wine3 <- glm(points ~ ., data = wine3, binomial(link = "logit"))
+logit_wine3 <- glm(points ~ country, data = wine3, binomial(link = "logit"))
+summary(logit_wine3)
+exp(coef(logit_wine3))
+
+confint(logit_wine3)
+confint.default(logit_wine3)
+```
+```{r price}
+logit_wine3 <- glm(points ~ price, data = wine3, binomial(link = "logit"))
+summary(logit_wine3)
+exp(coef(logit_wine3))
+
+confint(logit_wine3)
+confint.default(logit_wine3)
 ```
