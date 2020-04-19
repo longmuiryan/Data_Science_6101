@@ -140,7 +140,7 @@ dom = ifelse(country == "US", 1, 0),
 p90 = ifelse(points > 90, 1, 0)
 ) %>%
 dplyr::select(
-points, price, year, red, dom, taster_following, taster_name,
+p90, price, year, red, dom, taster_following, taster_name,
 composite_lon, composite_lat, composite_el, p90
 )
 
