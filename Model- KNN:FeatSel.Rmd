@@ -24,46 +24,44 @@ unloadPkg = function(pkg, character.only = FALSE) {
 loadPkg("tidyverse")
 loadPkg("factoextra")
 
-winedata <- data.frame(read.csv("~/Documents/DATS6101/edwinbet/data/winemag-data-130k-v2.csv"))
-wine1 <- na.omit(winedata)
-wine2 <- wine1[ -c(1,3,11,12) ]
-str(wine2)
+winedata <- read.csv("~/Documents/DATS6101/edwinbet/data/wine_reviews.csv")
+# wine1 <- na.omit(winedata)
+# wine2 <- wine1[ -c(1,3,11,12) ]
+wine <- winedata %>% 
+ # dplyr::mutate(
+ #    red = ifelse(color == "red", 1, 0),
+ #    dom = ifelse(country == "US", 1, 0)
+ #  ) %>%
+ dplyr::select(
+    points, price, year, taster_name, taster_following,
+    composite_el, composite_lat, composite_lon
+  ) %>% 
+ mutate_all(as.numeric) %>% 
+ filter_all(function(x){!is.na(x)}) 
+
+glimpse(wine)
+
 ```
 
 # Remove Outliers
 ```{r}
-outliers <- boxplot(wine2$price, plot=FALSE)$out
-wine2[which(wine2$price %in% outliers),]
+outliers <- boxplot(wine$price, plot=FALSE)$out
 
-wine2<- wine2[-which(wine2$price %in% outliers),]
-boxplot(mtcars$disp)
+wine2<- wine[-which(wine$price %in% outliers),]
 ```
 
-
-```{r}
-wine2$country<- as.numeric(wine2$country)
-wine2$province<- as.numeric(wine2$province)
-wine2$taster_name<- as.numeric(wine2$taster_name)
-wine2$region_1<- as.numeric(wine2$region_1)
-wine2$region_2<- as.numeric(wine2$region_2)
-wine2$points<- as.numeric(wine2$points)
-wine2$designation<- as.numeric(wine2$designation)
-wine2$variety<- as.numeric(wine2$variety)
-wine2$winery<- as.numeric(wine2$winery)
-str(wine2)
-```
 
 ###K-Means
 
 ```{r}
 set.seed(1000)
-wine <- scale(wine2)
-head(wine)
+# wine_review <- scale(wine2)
+# head(wine)
 
 
 # function to compute total within-cluster sum of square
 wss <- function(k) {
-  kmeans(wine, k, nstart = 10 )$tot.withinss
+  kmeans(wine2, k, nstart = 10 )$tot.withinss
 }
 
 # Compute and plot wss for k = 1 to k = 15
@@ -77,38 +75,16 @@ plot(k.values, wss_values,
        xlab="Number of clusters K",
        ylab="Total within-clusters sum of squares")
 
-k <- kmeans(wine, centers = 4, nstart = 25)
+k <- kmeans(wine2, centers = 6, nstart = 25)
 print(k)
 
 # plots to compare
-fviz_cluster(k, geom = "point",  data = wine) + ggtitle("k = 5")
+fviz_cluster(k, geom = "point",  data = wine2) + ggtitle("k = 5")
+
+k$centers
+k$size
 
 # https://uc-r.github.io/kmeans_clustering
-```
-
-###K nearest neighbor
-```{r, include=TRUE}
-# loadPkg(class)
-# set.seed(1000)
-# 
-# wine_sample <- sample(2, nrow(wine2), replace=TRUE, prob=c(0.75, 0.25))
-# 
-# wine_train<- wine[wine_sample==1, 1:7]
-# wine_test <- wine[wine_sample==2, 1:7]
-# 
-# wine.trainLabels <- wine2[wine_sample==1, 8]
-# wine.testLabels <- wine2[wine_sample==2, 8]
-# 
-# wine_pred <- knn(train = wine_train, test = wine_test, cl=wine.trainLabels, k=5)
-# 
-# loadPkg(gmodels)
-# IRISPREDCross <- CrossTable(wine.testLabels, wine_pred, prop.chisq = FALSE)
-# 
-# loadPkg(caret) 
-# cm = confusionMatrix(wine_pred, reference = as.factor(wine.testLabels) )
-# cm$overall
-# cm$byClass
-
 ```
 
 ###Feature Selection
@@ -117,20 +93,46 @@ loadPkg("corrplot")
 loadPkg("leaps")
 loadPkg(faraway)
 loadPkg(car)
-cor(x= wine2$price, y = wine2$points, method = "spearman")
-corr <-cor(wine2)
+
+corr <-cor(wine2) 
 corrplot(corr, type = "upper")
-# corrplot(wine2)
 
 reg1 <- regsubsets(wine2$points~. , data = wine2, nvmax = 9, nbest = 2, method = "exhaustive") 
 (summary(reg1))
 plot(reg1, scale = "adjr2", main = "Adjusted R^2")
 
-fit1 <- glm(wine2$points ~ country + region_2 +region_1 + designation + price + taster_name + province + variety, data = wine2)
+fit1 <- glm(wine2$points ~ points + price + year + taster_following + composite_el + composite_lat + composite_lon, data = wine2)
 summary(fit1)
 vif(fit1)
 plot(reg1, scale = "bic", main = "BIC")
 
 subsets(reg1, statistic="adjr2", legend = FALSE, min.size = 3, main = "Adjusted R^2")
 abline(a = 1, b = 1, lty = 2)  
+```
+
+
+Based on the correlation matrix, we learn that points has a statistically significant linear relationship with the variables: price, composite_lat, and taster_name, taste_following. While the results of regression confirms the relationship between independent variables and dependent variables, the correlation analysis allows us to identify the variable that will have a direct impact on the quality points. The output of this analysis confirmed price as a strong predictor of points: the best wines are the wines that were properly fermented or aerated, requiring time and real estate, and thus, increasing the cost of production. The second variable identified by the correlation region, plays a significant role in the analysis as the quality of wine depends on several factors such as climate, elevation, type of grape and soil; producing wines in regions where the climate is incompatible with wine grapes will deprive the grape from a favorable growth environment. Finally, the reviewer taste plays an apparent bias in point assignment. If a reviewer prefers sugary wines, the odds of them assigning a lower score to a tart-ier wine is fairly high.
+
+
+### Relationship between wine reviwers and taste
+```{r}
+# loadPkg("corrplot")
+# loadPkg("leaps")
+# loadPkg(faraway)
+# loadPkg(car)
+# 
+# wine_reviewer_info <- winedata %>% 
+#  # dplyr::mutate(
+#  #    red = ifelse(color == "red", 1, 0),
+#  #    dom = ifelse(country == "US", 1, 0)
+#  #  ) %>%
+#  dplyr::select(
+#     acidity, tannins, cherry, ripe, spice, oak, fresh, rich, dry, berry, plum, soft, apple, fruits, sweet, crisp, blackberry, light, dark, citrus, bodied, vanilla, bright, pepper, green, lemon, raspberry, peach, chocolate, dried, pear, taster_following, Alexander.Peartree, Anna.Lee.C.Iijima, Anne.Krebiehl.MW, Carrie.Dykes,
+#   ) %>% 
+#  mutate_all(as.numeric) %>% 
+#  filter_all(function(x){!is.na(x)}) 
+# 
+# glimpse(wine_reviewer_info)
+
+
 ```

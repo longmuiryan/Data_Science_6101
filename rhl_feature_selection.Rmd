@@ -1,0 +1,218 @@
+---
+title: "Wine Feature Selection"
+author: "Ryan Longmuir"
+date: "4/16/2020"
+output:
+  html_document:
+    code_folding: hide
+    number_sections: true
+    toc: yes
+    toc_depth: 3
+    toc_float: yes
+---
+
+
+```{r setup, include = FALSE} 
+
+knitr::opts_chunk$set(warning = F, message = F)
+options(scientific=T, digits = 3) 
+
+```
+
+
+```{r packages & functions , include = F}
+
+# -----------------------------------------------------------------------------
+# loadPkg 
+# -----------------------------------------------------------------------------
+
+loadPkg = function(pkg, character.only = FALSE) { 
+  if (!character.only) { pkg <- as.character(substitute(pkg)) }
+  pkg <- ifelse(!character.only, as.character(substitute(pkg)) , pkg)  
+  if (!require(pkg,character.only=T, quietly =T)) { install.packages(substitute(pkg),dep=T); if(!require(pkg,character.only=T)) stop("Package not found") } 
+}
+
+# -----------------------------------------------------------------------------
+# packages 
+# -----------------------------------------------------------------------------
+
+loadPkg("tidyverse")
+loadPkg("kableExtra")
+loadPkg("corrplot")
+loadPkg("leaps")
+loadPkg("faraway")
+loadPkg("car")
+loadPkg("caret")
+
+# ------------------------------------------------------------------------
+# plotting functions
+# ------------------------------------------------------------------------
+
+```
+
+### Research Question 
+
+Recall that in the previous iteration of this project, Data Wine'ing leveraged wine reviews collected from the magazine WineEnthusiast to conduct inferential statistics and uncover insights about wine quality. Data Wine'ing aimed to measure the degree of influence location had on the quality of a wine. More specifically Data Wine'ing posed the question "Are wines grown in prominent wine producing countries (e.g., Italy and France) rated higher than those grown in California?" Exploratory data analysis, inferential statistics and simple regression analysis revealed that location had a significant but subtle effect on wine quality, often less than one tenth of a point. This result has motivated Data Wine'ing's decision to broaden it's research question to explore the predictive power of the other variable available in the dataset. Data Wine'ing wishes to answer the following question "What are the factors that influence wine quality? Does there exist a limited number of factors that consumers can use to reliably choose wines of high quality?" 
+
+### Data Wrangling 
+
+Data Wine'ing previously used the Wine Reviews dataset publish by Zach Thoutt on Kaggle. Although the Wine Reviews dataset provided the Data Wine'ing team with a wealth of clean and informative data to fuel it's analysis of wine quality, there remained challenges classifying wine variety and location. Data Wine'ing seized this opportunity to develop simple binary variables to denote whether a wine is red or white and whether a wine is produced domestically in the United States or abroad. Furthermore Data Wine'ing has taken advantage of the Google Maps API to create new variable measuring longitude, latitude and elevation. Lastly using the critic's twitter handle, Data Wine'ing has created a variable measuring the number of followers a given critic has. Note, the number of followers associated with each of the critics is recorded as of the today rather than at the time of the review. 
+
+### Summary Statistics 
+
+```{r glance over the dataset}
+
+raw_wine_reviews.df <- read.csv("data/wine_reviews.csv")
+
+# counting missing values & get a glimpse of the data 
+raw_wine_reviews.df %>% summarise_all(function(x){sum((is.na(x)|x == ""))/nrow(.)})  
+raw_wine_reviews.df %>% glimpse()
+
+```
+
+### Correlational Analysis 
+
+Below is a simple correlational analysis of the following variables 
+
+- points - The number of points awarded to the wine by WineEnthusiast 
+- price - The price of the wine at the time of the review 
+- year - The year the wine was produced, parsed from the title 
+- red -  Equal to 1 if the variety of wine is red and 0 othersie 
+- dom - Equal to 1 if the wine produced in the United States 
+- fol - The number of Twitter followers of the critic who wrote the review
+- lon - The longidtude of the region where the wine was produced 
+- lat - The latitude of the region where the wine was produced 
+- el - The elavation of the region wehre the wine was produced
+
+As one might have expected, the greatest correlation is between the dom and lat, lon and el. The correlation table is consistent with the results in the previous iteration of this project, price is has a moderate postive correlation and year has a weak negetive correlation with points. 
+
+
+```{r corrplot}
+
+# -----------------------------------------------------------------------------
+# regular correlation analysis 
+# -----------------------------------------------------------------------------
+
+tasters <- c(
+  "Alexander Peartree", "Anna Lee C. Iijima", "Anne Krebiehl MW",
+  "Carrie Dykes", "Christina Pickard", "Fiona Adams", "Jeff Jenssen",
+  "Jim Gordon", "Joe Czerwinski", "Kerin O’Keefe", "Lauren Buzzeo",
+  "Matt Kettmann", "Michael Schachner", "Mike DeSimone", "Paul Gregutt",
+  "Roger Voss", "Sean P. Sullivan", "Susan Kostrzewa", "Virginie Boone"
+)
+flavors <- c(
+ "acidity", "tannins", "cherry", "black", "ripe", "red", "spice", "oak", "fresh",
+ "rich", "dry", "berry", "nose", "plum", "soft", "apple", "fruits",
+ "sweet", "white", "crisp", "blackberry", "light", "dark", "citrus",
+ "bodied", "vanilla", "bright", "pepper", "green", "lemon",
+ "raspberry", "peach", "chocolate", "dried", "pear"
+)
+
+wine_reviews.df <- raw_wine_reviews.df %>%
+  mutate(
+    red = ifelse(color == "red", 1, 0),
+    dom = ifelse(country == "US", 1, 0)
+  ) %>%
+    rename(
+    fol = taster_following, name = taster_name
+  ) %>% 
+  select( # select variables for analysis
+    points, price, year, red, dom, fol,
+    el, lat, lon
+  ) %>% 
+  mutate_all(as.numeric) %>%
+  filter_all(function(x){!is.na(x)})
+
+# corrplot
+wine_reviews.df %>%
+  cor() %>% corrplot.mixed()
+
+# -----------------------------------------------------------------------------
+# critics and flavors 
+# -----------------------------------------------------------------------------
+
+# raw_wine_reviews.df %>%
+#   select(
+#     points, acidity, tannins, cherry, ripe, spice, oak, fresh, rich, dry,
+#     Alexander.Peartree, Anna.Lee.C..Iijima, Carrie.Dykes, Christina.Pickard, Fiona.Adams,
+#     Jeff.Jenssen, Jim.Gordon, Joe.Czerwinski, Kerin.O.Keefe, Lauren.Buzzeo, Mike.DeSimone,
+#     Paul.Gregutt, Roger.Voss
+#   ) %>% 
+#   filter_all(function(x){!is.na(x)}) %>%
+#   cor() %>% corrplot(method = "color")
+
+
+```
+
+### Feature Selection 
+
+In this section Data Wine'ing employs mutivariate regression analysis to estimate the effect the variables discussed the previous section on points. Data Wine'ing conducted an exhaustive search of linear models on points usings the function `regsubsets()` from the the leaps package, keeping the best two subsets of explanatory variables for each size. Data Wine'ing then evaluated each of the models using Mallows's Cp (Cp), Bayesian Information Criterion (BIC) and the Adjusted R Squared. We found that the fill model minimized the Cp, BIC and Adjusted R Squared. The variance inflation factor (VIF) of the full model suggested no multicolearity betwen coefficients. Furthermore 
+
+```{r feature selection (adjr2)}
+
+# generate tables 
+regsub <- regsubsets(points ~ . , data = wine_reviews.df, method = "exhaustive", nbest = 2)
+summary(regsub)
+
+# make plots 
+plot(regsub, scale = "adjr2")
+plot(regsub, scale = "bic") 
+plot(regsub, scale = "Cp") 
+
+# make more plots 
+p.info <- subsets(regsub,statistic = "adjr2", legend = F, min.size = 3, main = "Adjusted R Squared")
+p.info <- subsets(regsub,statistic = "bic", legend = F, min.size = 3, main = "BIC")
+p.info <- subsets(regsub,statistic = "cp", legend = F, min.size = 3, main = "Cp")
+abline(a = 1, b = 1, lty = 2)
+
+# return best model using each of the metrics
+which.max(summary(regsub)$adjr2)
+which.min(summary(regsub)$bic)
+which.min(summary(regsub)$cp)
+
+# build model
+adjr2.m <- lm(data = wine_reviews.df, formula = points ~ .)
+
+# check for multicollinearity
+vif(adjr2.m)
+
+# -----------------------------------------------------------------------------
+# Test full model 
+# -----------------------------------------------------------------------------
+
+# Partition dataset 
+set.seed(2)
+wine_reviews.df <- mutate(wine_reviews.df, id = row_number(points)) 
+train.df <- wine_reviews.df %>% sample_frac(.75)
+test.df  <- anti_join(wine_reviews.df, train.df , by = 'id')
+
+# Estimate model 
+model.m <- lm(points ~ . -id, data = train.df)
+
+# Make predictions and compute the R2, RMSE and MAE
+predict.v <- model.m %>% predict(test.df) 
+data.frame(
+  R2 = R2(predict.v, test.df$points),
+  RMSE = RMSE(predict.v, test.df$points),
+  MAE = MAE(predict.v, test.df$points)
+)
+
+```
+
+
+### Lasso 
+
+### Comparitive Section 
+
+
+
+
+
+
+
+
+
+
+
+
+
