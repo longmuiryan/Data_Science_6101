@@ -1,0 +1,170 @@
+---
+title: "Data Science 6101 Project 1 Paper"
+author: "by Data Wine'ing"
+output:
+  html_document:
+    code_folding: hide
+    number_sections: false
+    toc: true
+    toc_depth: 2
+    toc_float: yes
+    includes: 
+      before_body: header.html
+---
+
+```{css, echo=FALSE}
+
+body {
+  color: black;
+  background-color: #FFFFF;
+}
+
+.list-group-item.active, .list-group-item.active:focus, .list-group-item.active:hover {
+    color: #FFFFF;
+    background-color: #2A363B;
+}
+```
+ 
+```{r Preamble, include = F}
+# knitr settings 
+knitr::opts_chunk$set(fig.width = 12, fig.height = 4,
+  warning=FALSE, message=FALSE, echo = FALSE)
+
+# set working directory 
+source("eda_functions.R")
+
+# load packages 
+loadPkg(tidyverse)
+loadPkg(bestglm)
+loadPkg(glmnet)
+
+# load data 
+getwd()
+wine_reviews <- read.csv("/Users/perry/Documents/Git/Intro To Data Science/edwinbet/data/wine_reviews.csv")
+str(wine_reviews)
+```
+
+```{r}
+# Create factor variable of points >89 and <90
+
+wine_reviews <- wine_reviews %>%
+  mutate(high_low = as.factor(ifelse(points > 89, "Yes", "No"))) %>%
+  na.omit(wine_reviews)
+
+# Yes = 90 or better
+# No = 89 or lower
+
+str(wine_reviews)
+
+# Grab relevant variables
+wine_reviews_scored <- wine_reviews %>%
+  dplyr::select(
+    # country, # huge
+    price,
+    # province, # this is huge
+    # variety, # also huge
+    year,
+    color,
+    high_low, 
+    composite_lat,
+    composite_lon, 
+    composite_el)
+
+str(wine_reviews_scored)
+```
+
+```{r feature selection & glm}
+loadPkg(bestglm)
+
+# Prepare data for bestglm
+xy <- wine_reviews_scored %>% 
+  select(-high_low, everything()) %>%
+  setNames(c(paste0("x", 1:(ncol(wine_reviews_scored)-1)), "y"))
+
+bestAIC <- bestglm(Xy = xy, family = binomial, IC = "AIC")
+glm <- bestAIC$BestModel
+summary(glm) # perfect correlation between IVs, need to run glmnet()
+exp(coef(bestAIC$BestModel))
+
+glm2 <- glm(formula = high_low ~., data = wine_reviews_scored, family = binomial)
+summary(glm)
+exp(coef(glm2))
+```
+
+```{r glmnet}
+loadPkg(glmnet)
+
+# Prepare data for glmnet
+x <- xy %>%
+  select(x1, x2, x3, x4, x5, x6)
+x <- as.matrix(x)
+y <- as.matrix(xy$y)
+
+loadPkg(generics)
+xy_matrix <- as.matrix(xy)
+
+x <- model.matrix(xy$y ~., data=xy)
+
+model_glmnet <- train(x = x, y = xy$y,
+                      metric = "ROC",
+                      method = "glmnet",
+                      trControl = trainControl(method="cv"))
+
+glmnet(x = data.matrix(x), y = data.matrix(xy$y), family = "binomial")
+```
+
+```{r more succinct}
+# ---------------------------------------------------------------------------
+# logit example 
+# ---------------------------------------------------------------------------
+
+wine_reviews.df <-  read.csv("/Users/perry/Documents/Git/Intro To Data Science/edwinbet/data/wine_reviews.csv") %>%
+  mutate(
+    red = ifelse(color == "red", 1, 0),
+    dom = ifelse(country == "US", 1, 0),
+    p90 = ifelse(points > 90, 1, 0)
+  ) %>%
+  dplyr::select(
+    points, price, year, red, dom, taster_following,
+    composite_el, composite_lat, composite_lon, p90
+  )
+
+glm <- glm(formula = p90 ~ . -points, data = wine_reviews.df, family = binomial)
+summary(glm)
+exp(coef(glm))
+```
+
+```{r more succinct pt. 2}
+# -----------------------------------------------------------------------------
+# Question 6
+# -----------------------------------------------------------------------------
+
+set.seed(50)
+
+# scale 
+wine_reviews_z <- mutate_at(wine_reviews.df, vars(-p90), scale) 
+
+# sample and subset 
+wine_reviews_sample <- sample(2, nrow(wine_reviews_z), replace = TRUE, prob = c(0.75, 0.25))
+wine_reviews_train <- filter(wine_reviews_z, wine_reviews_sample == 1) 
+wine_reviews_test <- filter(wine_reviews_z, wine_reviews_sample == 2)
+
+
+# estimate logistic model using training data 
+wine_reviews_logit <- glm(p90 ~ . -points, data = wine_reviews_train, family = binomial)
+summary(wine_reviews_logit)
+
+# use cutoff rule to clasify type 
+wine_reviews_test <- wine_reviews_test %>%
+  mutate(
+    p90_logit_p = predict(wine_reviews_logit, wine_reviews_test, type = c("response")),
+    p90_logit = ifelse(p90_logit_p > 0.5, 1, 0) 
+  )
+
+# calculate accuracy
+t <- table(wine_reviews_test$p90, wine_reviews_test$p90_logit)
+t
+(t[1,1] + t[2,2]) / nrow(wine_reviews_test)
+```
+
+The logistic regression model of training data from `wine_reviews_df` 
