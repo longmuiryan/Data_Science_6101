@@ -1,0 +1,222 @@
+---
+title: "Data Science 6101 Project 2"
+author: "B Irish"
+output:
+  html_document:
+    code_folding: hide
+    number_sections: false
+    toc: true
+    toc_depth: 2
+    toc_float: yes
+    includes: 
+      before_body: header.html
+---
+
+```{css, echo=FALSE}
+
+body {
+  color: black;
+  background-color: #FFFFF;
+}
+
+.list-group-item.active, .list-group-item.active:focus, .list-group-item.active:hover {
+    color: #FFFFF;
+    background-color: #2A363B;
+}
+```
+ 
+```{r Preamble, include = F}
+
+# knitr settings 
+knitr::opts_chunk$set(fig.width = 12, fig.height = 4,
+  warning=FALSE, message=FALSE, echo = FALSE)
+
+# set working directory 
+# setwd("~/Desktop/Git/edwinbet")
+#source("eda_functions.R")
+#source("leaflet_map.R")
+
+#load packages 
+loadPkg(tidyverse)
+loadPkg(gridExtra)
+loadPkg(ggExtra)
+loadPkg(kableExtra)
+loadPkg(xtable)
+loadPkg(gganimate)
+loadPkg(dplyr)
+
+# load data 
+wine_reviews <- data.frame(read.csv("data/wine_reviews.csv"))
+
+```
+```{r xkable}
+
+# use this function to conveniently load libraries and work smoothly with knitting
+# can add quietly=T option to the require() function
+loadPkg = function(pkg, character.only = FALSE) { 
+  if (!character.only) { pkg <- as.character(substitute(pkg)) }
+  pkg <- ifelse(!character.only, as.character(substitute(pkg)) , pkg)  
+  if (!require(pkg,character.only=T, quietly =T)) {  install.packages(substitute(pkg),dep=T); if(!require(pkg,character.only=T)) stop("Package not found") } 
+}
+loadPkg(knitr)
+
+# unload/detact package when done using it
+unloadPkg = function(pkg, character.only = FALSE) { 
+  if(!character.only) { pkg <- as.character(substitute(pkg)) } 
+  search_item <- paste("package", pkg,sep = ":") 
+  while(search_item %in% search()) { detach(search_item, unload = TRUE, character.only = TRUE) } 
+}
+
+loadPkg(xtable)
+loadPkg(kableExtra)
+loadPkg(stringi)
+
+xkabledply = function(smmry, title='Caption', pos='left') { # Thanks Ryan Longmuir for the codes
+  smmry %>%
+    xtable() %>% 
+    kable(caption = title, digits = 4) %>%
+    kable_styling(position = "center") %>%
+    kable_styling(bootstrap_options = "striped", full_width = F,
+    position = pos)
+}
+
+xkablesummary = function(df) { 
+  #' Combining base::summary, xtable, and kableExtra, to easily display numeric variable summary of dataframes. 
+  #` If the categorical variables has less than 6 levels, the function will still run without error.
+  #' ELo 202003 GWU DATS
+  #' version 1
+  #' @param df The dataframe.
+  #' @return The summary table for display, or for knitr to process into other formats 
+  #' @examples
+  #' xkablesummary( faraway::ozone )
+  #' xkablesummary( ISLR::Hitters )
+  
+  s = summary(df) %>%
+    apply( 2, function(x) stringr::str_remove_all(x,c("Min.\\s*:\\s*","1st Qu.\\s*:\\s*","Median\\s*:\\s*","Mean\\s*:\\s*","3rd Qu.\\s*:\\s*","Max.\\s*:\\s*")) ) %>% # replace all leading words
+    apply( 2, function(x) stringr::str_trim(x, "right")) # trim trailing spaces left
+  
+  colnames(s) <- stringr::str_trim(colnames(s))
+  
+  if ( dim(s)[1] ==6 ) { rownames(s) <- c('Min','Q1','Median','Mean','Q3','Max') 
+  } else if ( dim(s)[1] ==7 ) { rownames(s) <- c('Min','Q1','Median','Mean','Q3','Max','NA') }
+  
+  s %>%
+    xkabledply("Table: Statistics summary.", "center")
+
+}
+
+xkablevif = function(model) { 
+  #' Combining faraway::vif, xtable, and kableExtra, to easily display numeric summary of VIFs for a model. 
+  #' ELo 202003 GWU DATS
+  #' version 1
+  #' @param df The dataframe.
+  #' @return The summary table for display, or for knitr to process into other formats 
+  #' @examples
+  #' xkablevif( model )
+  
+  vifs = table( names(model$coefficients)[2:length(model$coefficients)] ) # remove intercept to set column names
+  vifs[] = faraway::vif(model) # set the values
+
+  vifs %>%
+    xtable() %>% 
+    kable(caption = "VIFs of the model", digits = 4, col.names = 'VIF') %>% # otherwise it will only has the generic name as 'V1' for the first vector in the table
+    kable_styling(position = "center") %>%
+    kable_styling(bootstrap_options = "striped", full_width = F,
+    position = "left")
+}
+```
+
+# KNN for wine_reviews
+```{r subset features}
+wine2 <- subset(wine_reviews, select = c(country, points, price, province, variety, winery, year, color))
+#nndf1 <- subset(nutrient_orig, select = c(8:45))
+
+
+wine2$country<- as.numeric(wine2$country)
+wine2$points<- as.numeric(wine2$points)
+wine2$price<- as.numeric(wine2$price)
+wine2$province<- as.numeric(wine2$province)
+wine2$variety<- as.numeric(wine2$variety)
+wine2$winery<- as.numeric(wine2$winery)
+wine2$year<- as.numeric(wine2$year)
+wine2$color<- as.numeric(wine2$color)
+
+str(wine2)
+head(wine2)
+tail(wine2)
+
+summary(wine2)
+xkablesummary(wine2)
+```
+```{r identify NAs}
+sum(is.na(wine2))
+#sum(is.na(wine2$country))
+#sum(is.na(wine2$points))
+sum(is.na(wine2$price))
+#sum(is.na(wine2$province))
+#sum(is.na(wine2$variety))
+#sum(is.na(wine2$winery))
+sum(is.na(wine2$year))
+sum(is.na(wine2$color))
+
+wine2 <- na.omit(wine2)
+
+
+sum(is.na(wine2))
+
+```
+
+
+```{r EDA}
+loadPkg(psych)
+pairs.panels(wine2[,-5], 
+             method = "pearson", # correlation method
+             hist.col = "#00AFBB", # set histogram color, can use "#22AFBB", "red",
+             density = TRUE,  # show density plots
+             ellipses = TRUE # show correlation ellipses
+             )
+unloadPkg(psych)
+```
+
+
+```{r preparing the model}
+
+loadPkg(FNN)
+
+scaled_wine2 <- as.data.frame(scale(wine2[1:7], center = TRUE, scale = TRUE))
+
+set.seed(1000)
+wine2_sample <- sample(2, nrow(scaled_wine2), replace=TRUE, prob=c(0.75, 0.25))
+
+wine2_training <- scaled_wine2[wine2_sample==1, 1:7]
+wine2_test <- scaled_wine2[wine2_sample==2, 1:7]
+```
+```{r Y-labels}
+
+wine2.trainLabels <- wine2[wine2_sample==1, 8]
+wine2.testLabels <- wine2[wine2_sample==2, 8]
+```
+```{r KNN model}
+
+# running the model 
+wine2_pred <- knn(train = wine2_training, test = wine2_test, cl=wine2.trainLabels, k=3)
+wine2_pred
+loadPkg(gmodels)
+wine2PREDCross <- CrossTable(wine2.testLabels, wine2_pred, prop.chisq = FALSE)
+
+```
+
+
+# Logit for wine_reviews
+
+```{r Logit}
+
+logit_wine2 <- glm(points ~ ., data = wine2, binomial(link = "logit"))
+summary(logit_wine2)
+exp(coef(logit_wine2))
+
+confint(logit_wine2)
+confint.default(logit_wine2)
+
+
+```
