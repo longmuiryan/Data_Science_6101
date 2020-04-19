@@ -137,24 +137,24 @@ wine2 <- wine2 %>%
 mutate(
 red = ifelse(color == "red", 1, 0),
 dom = ifelse(country == "US", 1, 0),
-p90 = ifelse(points > 90, 1, 0)
+p88 = ifelse(points > 88, 1, 0)
 ) %>%
 dplyr::select(
-p90, price, year, red, dom, taster_following, taster_name,
-composite_lon, composite_lat, composite_el, p90
+p88, price, year, red, dom, taster_following, taster_name,
+composite_lon, composite_lat, composite_el, p88
 )
 
 #wine2$dom<- as.numeric(wine2$dom)
-wine2$p90<- as.numeric(wine2$p90)
-wine2$price<- as.numeric(wine2$price)
+#wine2$p88<- as.numeric(wine2$p88)
+#wine2$price<- as.numeric(wine2$price)
 #wine2$province<- as.numeric(wine2$province)
-wine2$year<- as.numeric(wine2$year)
-wine2$red<- as.numeric(wine2$red)
-wine2$taster_name<- as.numeric(wine2$taster_name)
-wine2$taster_following<- as.numeric(wine2$taster_following)
-wine2$composite_lon<- as.numeric(wine2$composite_lon)
-wine2$composite_lat<- as.numeric(wine2$composite_lat)
-wine2$composite_el<- as.numeric(wine2$composite_el)
+#wine2$year<- as.numeric(wine2$year)
+#wine2$red<- as.numeric(wine2$red)
+#wine2$taster_name<- as.numeric(wine2$taster_name)
+#wine2$taster_following<- as.numeric(wine2$taster_following)
+#wine2$composite_lon<- as.numeric(wine2$composite_lon)
+#wine2$composite_lat<- as.numeric(wine2$composite_lat)
+#wine2$composite_el<- as.numeric(wine2$composite_el)
 
 str(wine2)
 head(wine2)
@@ -198,31 +198,64 @@ unloadPkg(psych)
 
 loadPkg(FNN)
 
-wine2 <- wine2 %>% select(-p90, everything())
+wine2 <- wine2 %>% select(-p88, everything())
+wine2 <- wine2 %>% select(-taster_name, everything())
 #str(wine2)
-scaled_wine2 <- as.data.frame(scale(wine2[1:10], center = TRUE, scale = TRUE))
+scaled_wine2 <- as.data.frame(scale(wine2[1:8], center = TRUE, scale = TRUE))
 
 set.seed(1000)
 wine2_sample <- sample(2, nrow(scaled_wine2), replace=TRUE, prob=c(0.75, 0.25))
 
-wine2_training <- scaled_wine2[wine2_sample==1, 1:10]
-wine2_test <- scaled_wine2[wine2_sample==2, 1:10]
+wine2_training <- scaled_wine2[wine2_sample==1, 1:8]
+wine2_test <- scaled_wine2[wine2_sample==2, 1:8]
 
 ```
 ```{r Y-labels}
 
-wine2.trainLabels <- wine2[wine2_sample==1, 10]
-wine2.testLabels <- wine2[wine2_sample==2, 10]
+wine2.trainLabels <- wine2[wine2_sample==1, 9]
+wine2.testLabels <- wine2[wine2_sample==2, 9]
 
 ```
 ```{r KNN model}
 
 # running the model 
 wine2_pred <- knn(train = wine2_training, test = wine2_test, cl=wine2.trainLabels, k=3)
-wine2_pred
+#wine2_pred
 loadPkg(gmodels)
 wine2PREDCross <- CrossTable(wine2.testLabels, wine2_pred, prop.chisq = FALSE)
+wine2PREDCross
+```
+```{r}
+loadPkg(gmodels)
+loadPkg(FNN)
+loadPkg(caret) 
 
+# create an empty dataframe to store the results from confusion matrices
+confusionMatrixResultDf = data.frame( k=numeric(0), Accuracy= numeric(0), Sensitivity=numeric(0), Specificity=numeric(0), Pos.Pred.Value=numeric(0), Neg.Pred.Value=numeric(0), Precision=numeric(0), Recall=numeric(0), F1=numeric(0), Prevalence=numeric(0), Detection.Rate=numeric(0), Detection.Prevalence=numeric(0), Balanced.Accuracy=numeric(0), row.names = NULL )
+
+for (kval in 3:15) {
+  #PimaPredict <- knn(train = zpima_Xtrain, test = zpima_Xtest, cl=zpima_ytrain, k=kval) 
+  wine2_pred <- knn(train = wine2_training, test = wine2_test, cl=wine2.trainLabels, k=kval)
+  #pimaXtable <- CrossTable(zpima_ytest, PimaPredict, prop.chisq = FALSE)
+  wine2PREDCross <- CrossTable(wine2.testLabels, wine2_pred, prop.chisq = FALSE)
+  print( paste("k = ", kval) )
+  #pimaXtable
+  wine2PREDCross
+  # 
+  #cm = confusionMatrix(PimaPredict, reference = zpima_ytest ) # from caret library
+  cm = confusionMatrix(wine2_pred, reference = factor(wine2.testLabels )) # from caret library
+  # 
+  cmaccu = cm$overall['Accuracy']
+  print( paste("Total Accuracy = ", cmaccu ) )
+  # 
+  cmt = data.frame(k=kval, Accuracy = cmaccu, row.names = NULL ) # initialize a row of the metrics 
+  cmt = cbind( cmt, data.frame( t(cm$byClass) ) ) # the dataframe of the transpose, with k valued added in front
+  confusionMatrixResultDf = rbind(confusionMatrixResultDf, cmt)
+  # print("Other metrics : ")
+}
+```
+```{r, results="asis"}
+xkabledply(confusionMatrixResultDf)
 ```
 
 
