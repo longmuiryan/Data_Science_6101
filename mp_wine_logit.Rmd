@@ -24,19 +24,10 @@ body {
     background-color: #2A363B;
 }
 ```
- 
-```{r Preamble, include = F}
-# knitr settings 
-knitr::opts_chunk$set(fig.width = 12, fig.height = 4,
-  warning=FALSE, message=FALSE, echo = FALSE)
 
-# set working directory 
-setwd("/Users/perry/Documents/Git/Intro To Data Science/edwinbet")
-
-# load packages 
-loadPkg(tidyverse)
-loadPkg(regclass)
-loadPkg(pROC)
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(warning = F, results = 'hide', message = F)
+options(scientific=T, digits = 3) 
 ```
 
 ```{r functions}
@@ -96,6 +87,83 @@ uzscale <- function(df, append=0, excl=NULL) {
 # detach("package:ISLR", unload = T)
 ```
 
+```{r xkablesummary}
+loadPkg(xtable)
+loadPkg(kableExtra)
+loadPkg(stringi)
+
+xkabledply = function(smmry, title='Caption', pos='left') { # Thanks Ryan Longmuir for the codes
+  smmry %>%
+    xtable() %>% 
+    kable(caption = title, digits = 4) %>%
+    kable_styling(position = "center") %>%
+    kable_styling(bootstrap_options = "striped", full_width = F,
+    position = pos)
+}
+
+xkablesummary = function(df) { 
+  #' Combining base::summary, xtable, and kableExtra, to easily display numeric variable summary of dataframes. 
+  #` If the categorical variables has less than 6 levels, the function will still run without error.
+  #' ELo 202003 GWU DATS
+  #' version 1
+  #' @param df The dataframe.
+  #' @return The summary table for display, or for knitr to process into other formats 
+  #' @examples
+  #' xkablesummary( faraway::ozone )
+  #' xkablesummary( ISLR::Hitters )
+  
+  s = summary(df) %>%
+    apply( 2, function(x) stringr::str_remove_all(x,c("Min.\\s*:\\s*","1st Qu.\\s*:\\s*","Median\\s*:\\s*","Mean\\s*:\\s*","3rd Qu.\\s*:\\s*","Max.\\s*:\\s*")) ) %>% # replace all leading words
+    apply( 2, function(x) stringr::str_trim(x, "right")) # trim trailing spaces left
+  
+  colnames(s) <- stringr::str_trim(colnames(s))
+  
+  if ( dim(s)[1] ==6 ) { rownames(s) <- c('Min','Q1','Median','Mean','Q3','Max') 
+  } else if ( dim(s)[1] ==7 ) { rownames(s) <- c('Min','Q1','Median','Mean','Q3','Max','NA') }
+  
+  s %>%
+    xkabledply("Table: Statistics summary.", "center")
+
+}
+
+xkablevif = function(model) { 
+  #' Combining faraway::vif, xtable, and kableExtra, to easily display numeric summary of VIFs for a model. 
+  #' ELo 202003 GWU DATS
+  #' version 1
+  #' @param df The dataframe.
+  #' @return The summary table for display, or for knitr to process into other formats 
+  #' @examples
+  #' xkablevif( model )
+  
+  vifs = table( names(model$coefficients)[2:length(model$coefficients)] ) # remove intercept to set column names
+  vifs[] = faraway::vif(model) # set the values
+
+  vifs %>%
+    xtable() %>% 
+    kable(caption = "VIFs of the model", digits = 4, col.names = 'VIF') %>% # otherwise it will only has the generic name as 'V1' for the first vector in the table
+    kable_styling(position = "center") %>%
+    kable_styling(bootstrap_options = "striped", full_width = F,
+    position = "left")
+}
+
+```
+
+```{r Preamble, include = F}
+# knitr settings 
+knitr::opts_chunk$set(fig.width = 12, fig.height = 4,
+  warning=FALSE, message=FALSE, echo = FALSE)
+
+# set working directory 
+setwd("/Users/perry/Documents/Git/Intro To Data Science/edwinbet")
+
+# load packages 
+loadPkg(tidyverse)
+loadPkg(regclass)
+loadPkg(pROC)
+loadPkg(ResourceSelection)
+loadPkg(pscl)
+```
+
 ```{r logit}
 
 wine_reviews.df <-  read.csv("/Users/perry/Documents/Git/Intro To Data Science/edwinbet/data/wine_reviews.csv") %>%
@@ -108,20 +176,51 @@ wine_reviews.df <-  read.csv("/Users/perry/Documents/Git/Intro To Data Science/e
     points, price, year, red, dom, taster_following, comp_el, comp_lat, comp_lon, p88, taster_name
     )
 
-wine_reviews.df <- na.omit(wine_reviews.df)
+sum(is.na(wine_reviews.df))
 
+wine_reviews.df <- na.omit(wine_reviews.df)
 str(wine_reviews.df)
+xkablesummary(wine_reviews.df)
 
 glm <- glm(formula = p88 ~ . -points, data = wine_reviews.df, family = binomial(link="logit"))
 summary(glm)
 exp(coef(glm))
+xkabledply(glm)
 ```
+Recall that we are interested in informing wine consumers what the best predictors are for selecting a quality wine, whether they're buying at their local wine store, or tasting wine at their favorite farmers market, we'd like to determine a metric for what really does constitute a "good" wine. The original dataset `wine_reviews` contains a lot of information across 72 variables, but for our purposes we've narrowed the dataset down to 11 (stored in `wine_reviews.df`) for the generalized linear regression: 
+`
+* `points`
+* `price`
+* `year`
+* `red`
+* `dom`
+* `taster_following`
+* `comp_el`
+* `comp_lat`
+* `comp_lon`
+* `p88` (outcome variable)
+* `taster_name`
+
+New to this dataset are binary, factor-level variables `red`, which is derived from `color` to determine if the reviewed wine is red, `dom`, which uses `country` to indicate whether the reviewed wine is from the United States, and, importantly, what will be the output variable, `p88`, which shows if the reviewed wine has a score of 89 points or greater. **As mentioned**, an 88 point cutoff was selected as it nearly slices the dataset in half and makes for good use in model training and testing, including the fact that this score is a toes the line between the delineation for what is "very good" and "excellent" wines (and also is just above the average score for all wine enthusiast reviews https://www.wine-searcher.com/critics-17-wine+enthusiast).
+
+Since wines are scored by each reviewer, it is necessary to understand the factors that influence the score a wine is given. A generalized linear model was built to predict the effect of the aforementioned variables on `p88`, or whether or not a wine that is reviewed receives a score of 89 or better. 38,675 NA values were removed from the dataset from the total 129971 observations, or 26% of the data. The model `glm(formula = p88 ~ . -points, data = wine_reviews.df, family = binomial(link="logit"))` was run to estimate `p88` and output can be found in **table #**. 
+
+We observe significant coefficients for all predictor variables, with the exception of `comp_lat`, latitude at which the reviewed wine was grown, and wine reviewers `taster_nameChristina Pickard` and `taster_nameVirginie Boone`. Notably, however, `taster_following`, `comp_el`, `comp_lat`, `comp_lon` provide no or a neglible effect on the odds-ratio for `p88` i.e., when points increase by one unit, these variables have no effect on the odds-ratio. This is interesting given the long-studied effects of geography on wine production - one may expect that growing wine in a place better-suited for growing grapes would produce a wine that is rated more highly than others, but our model suggests location has no effect on how point value assigned to the wine reviewed. This begs the question of what effect a particular reviewer has on point assignment. As we can see from the results in the model, and the odds-ratio coefficients, the levels `tasterName` i.e., those who reviewed the wine, play a signficiant role in predicting if a wine will be scored 89 points or better. More research is required to come a granlar analysis on the what exactly may influence the bias an individual reviewer has one a wine. 
+**NOTE: If true, this may be a good place to discuss/analyze words in an individuals reviewer's review**
+
+The confusion matrix for the model in **table #** shows that the model was run with 73.5% accurarcy; the ROC-AUC curve accompanying this model returns a value 0.82, suggesting the model performs well when distinguishing between wines scored 89 or better; however, the result Hosmer-Lemeshow Goodness of Fit Test for the model suggests that there exists a significant difference between our model the observed data (p < .05). Further research and evaluation is required to build a model that can pass this test.
+
+**Question:** why is the glm and test/train glm returning such high accuracy, but the Hosmer-Lemeshow Goodness of Fit Test for the model has a p < 0.05?
 
 ```{r model eval}
-cm <- reglass::confusion_matrix(glm)
-cm
+cm <- regclass::confusion_matrix(glm)
+kable(cm)
 accuracy_glm <- (cm[1,1]+cm[2,2])/(cm[1,1] + cm[1,2] + cm[2,1] + cm[2,2])*100
 accuracy_glm # 73.5% accurate
+
+ResourceSelection::hoslem.test(wine_reviews.df$p88, fitted(glm))
+
+pscl::pR2(glm)
 
 wine_reviews.df$prob <- predict(glm, type=c("response"))
 roc <- pROC::roc(p88 ~ prob, data=wine_reviews.df)
@@ -132,7 +231,7 @@ plot(roc)
 ```{r predict}
 # Referencing HW09 Q6
 
-set.seed(1000)
+set.seed(50)
 
 # scale 
 wine_reviews_z <- uzscale(wine_reviews.df, append=0, excl=c("p88"))
@@ -143,7 +242,7 @@ wine_reviews_train <- filter(wine_reviews_z, wine_reviews_sample == 1)
 wine_reviews_test <- filter(wine_reviews_z, wine_reviews_sample == 2)
 
 # estimate logistic model using training data 
-wine_reviews_logit <- glm(p88 ~ . -points, data = wine_reviews_train, family = binomial)
+wine_reviews_logit <- glm(p88 ~ . -points-prob, data = wine_reviews_train, family = binomial)
 summary(wine_reviews_logit)
 
 wine_reviews_logit$xlevels
@@ -161,3 +260,5 @@ t <- table(wine_reviews_test$p88, wine_reviews_test$p88_logit)
 t
 (t[1,1] + t[2,2]) / nrow(wine_reviews_test)
 ```
+
+We were also intersted in evaluating the predictive power of the generalized linear model on what has the strongest affect on wines scored 89 points or better. `wine_reviews.df` was scaled and training and test subsets of the data were created to determine the model's effectiveness. The generalized linear model of the test data proved to have 73.4% accuracy **(table #)**, suggesting the logisitic regression for `p88` is a sufficiently accurate one.
