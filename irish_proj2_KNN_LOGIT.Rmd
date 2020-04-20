@@ -130,7 +130,7 @@ loadPkg(dplyr)
 
 # KNN for wine_reviews
 ```{r subset features}
-wine2 <- subset(wine_reviews, select = c(country, points, price, province, year, color, taster_name, taster_following, composite_lon, composite_lat, composite_el))
+wine2 <- subset(wine_reviews, select = c(country, points, price, province, year, color, taster_name, taster_following, comp_lon, comp_lat, comp_el))
 #nndf1 <- subset(nutrient_orig, select = c(8:45))
 
 wine2 <- wine2 %>%
@@ -141,7 +141,7 @@ p88 = ifelse(points > 88, 1, 0)
 ) %>%
 dplyr::select(
 p88, price, year, red, dom, taster_following, taster_name,
-composite_lon, composite_lat, composite_el, p88
+comp_lon, comp_lat, comp_el, p88
 )
 
 #wine2$dom<- as.numeric(wine2$dom)
