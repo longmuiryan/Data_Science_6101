@@ -1,0 +1,199 @@
+---
+  title: "R Notebook"
+output:
+  html_document:
+  df_print: paged
+---
+  
+  
+  ```{r}
+knitr::opts_chunk$set(warning = F, results = 'markup', message = F)
+options(scientific=T, digits = 3) 
+
+loadPkg = function(pkg, character.only = FALSE) { 
+  if (!character.only) { pkg <- as.character(substitute(pkg)) }
+  pkg <- ifelse(!character.only, as.character(substitute(pkg)) , pkg)  
+  if (!require(pkg,character.only=T, quietly =T)) {  install.packages(substitute(pkg),dep=T); if(!require(pkg,character.only=T)) stop("Package not found") } 
+}
+
+# unload/detact package when done using it
+unloadPkg = function(pkg, character.only = FALSE) { 
+  if(!character.only) { pkg <- as.character(substitute(pkg)) } 
+  search_item <- paste("package", pkg,sep = ":") 
+  while(search_item %in% search()) { detach(search_item, unload = TRUE, character.only = TRUE) } 
+}
+
+
+xkabledply = function(modelsmmrytable, title="Table", digits = 4, pos="left", bso="striped") { 
+  
+  modelsmmrytable %>%
+    xtable() %>% 
+    kable(caption = title, digits = digits) %>%
+    kable_styling(bootstrap_options = bso, full_width = FALSE, position = pos)
+}
+
+xkablesummary = function(df, title="Table: Statistics summary.", digits = 4, pos="left", bso="striped") { 
+  
+  s = summary(df) %>%
+    apply( 2, function(x) stringr::str_remove_all(x,c("Min.\\s*:\\s*","1st Qu.\\s*:\\s*","Median\\s*:\\s*","Mean\\s*:\\s*","3rd Qu.\\s*:\\s*","Max.\\s*:\\s*")) ) %>% 
+    apply( 2, function(x) stringr::str_trim(x, "right")) # trim trailing spaces left
+  
+  colnames(s) <- stringr::str_trim(colnames(s))
+  
+  if ( dim(s)[1] ==6 ) { rownames(s) <- c('Min','Q1','Median','Mean','Q3','Max') 
+  } else if ( dim(s)[1] ==7 ) { rownames(s) <- c('Min','Q1','Median','Mean','Q3','Max','NA') }
+  
+  xkabledply(s, title=title, digits = digits, pos=pos, bso=bso )
+}
+
+##------------------------------------------------------------
+##------------------------------------------------------------
+
+loadPkg(reshape2)
+loadPkg(tidyverse)
+loadPkg(factoextra)
+loadPkg(xtable)
+loadPkg(kableExtra)
+loadPkg(stringi)
+loadPkg(knitr)
+loadPkg(gridExtra)
+
+##------------------------------------------------------------
+##------------------------------------------------------------
+winedata <- read.csv("~/Documents/DATS6101/edwinbet/data/wine_reviews.csv")
+# wine1 <- na.omit(winedata)
+# wine2 <- wine1[ -c(1,3,11,12) ]
+wine <- winedata %>% 
+  # dplyr::mutate(
+  #    red = ifelse(color == "red", 1, 0),
+  #    dom = ifelse(country == "US", 1, 0)
+  #  ) %>%
+  dplyr::select(points, price, year, taster_following, comp_el, comp_lat, comp_lon) %>% 
+  mutate_all(as.numeric) %>% 
+  filter_all(function(x){!is.na(x)}) 
+
+glimpse(wine)
+
+
+# Remove Outliers
+outliers <- boxplot(wine$price, plot=FALSE)$out
+wine2<- wine[-which(wine$price %in% outliers),]
+
+```
+
+###K-Means
+
+```{r}
+set.seed(1000)
+# wine_review <- scale(wine2)
+# head(wine)
+
+
+# function to compute total within-cluster sum of square
+wss <- function(k) {
+  kmeans(wine2, k, nstart = 10 )$tot.withinss
+}
+
+# Compute and plot wss for k = 1 to k = 15
+k.values <- 1:15
+
+# extract wss for 2-15 clusters
+wss_values <- map_dbl(k.values, wss)
+
+plot(k.values, wss_values,
+     type="b", pch = 19, frame = FALSE,
+     xlab="Number of clusters K",
+     ylab="Total within-clusters sum of squares")
+
+#nstart is just the number of configurations, we dont really need that
+k <- kmeans(wine2, centers = 5)
+print(k)
+
+# plots to compare
+fviz_cluster(k, geom = "point",  data = wine2) + ggtitle("k = 5")
+
+#Cluster Mean
+k$centers
+#Number of values in each cluster
+k$size
+
+# https://uc-r.github.io/kmeans_clustering
+```
+
+```{r fig.width = 20}
+
+wine_cluster_description_mean <- wine2 %>% 
+  mutate(Cluster = k$cluster) %>%
+  group_by(Cluster) %>%
+  summarize_all('mean')
+wine_cluster_description_mean
+wine_cluster_description_median <- wine2 %>% 
+  mutate(Cluster = k$cluster) %>%
+  group_by(Cluster) %>%
+  summarize_all('median')
+wine_cluster_description_median
+wine_cluster_description_max <- wine2 %>% 
+  mutate(Cluster = k$cluster) %>%
+  group_by(Cluster) %>%
+  summarize_all('max')
+wine_cluster_description_max
+wine_cluster_description_min <- wine2 %>% 
+  mutate(Cluster = k$cluster) %>%
+  group_by(Cluster) %>%
+  summarize_all('min')
+wine_cluster_description_min
+
+```
+
+
+```{r fig.width = 20}
+
+a <- wine2 %>%
+  mutate(cluster = k$cluster) %>%
+  select(cluster, price) %>% 
+  melt(id.vars = "cluster") %>%
+  ggplot(aes(y = value, x = paste(variable,cluster,sep=" \n cluster \n"))) + geom_boxplot(color='#B31B1B', fill = '#F4C2C2', size=1.3, outlier.colour="black", outlier.size=4) + labs(x = "Price") + ggtitle("Price by Cluster") +  theme(plot.title = element_text(hjust = 0.5)) + theme(plot.title = element_text(size=25))
+
+b <- wine2 %>%
+  mutate(cluster = k$cluster) %>%
+  select(cluster, points) %>% 
+  melt(id.vars = "cluster") %>%
+  ggplot(aes(y = value, x = paste(variable,cluster,sep=" \n cluster \n"))) + geom_boxplot(color='#B31B1B', fill = '#F4C2C2', size=1.3, outlier.colour="black", outlier.size=4) + labs(x = "Points") + ggtitle("Points by Cluster") +  theme(plot.title = element_text(hjust = 0.5))+ theme(plot.title = element_text(size=25))
+
+c <- wine2 %>%
+  mutate(cluster = k$cluster) %>%
+  select(cluster, taster_following) %>% 
+  melt(id.vars = "cluster") %>%
+  ggplot(aes(y = value, x = paste(variable,cluster,sep=" \n cluster \n"))) + geom_boxplot(color='#B31B1B', fill = '#F4C2C2', size=1.3, outlier.colour="black", outlier.size=4) + labs(x = "Wine Taster Twitter Following") + ggtitle("Wine Taster Twitter Following by Cluster") +  theme(plot.title = element_text(hjust = 0.5))+ theme(plot.title = element_text(size=25))
+
+d <- wine2 %>%
+  mutate(cluster = k$cluster) %>%
+  select(cluster, year) %>% 
+  melt(id.vars = "cluster") %>%
+  ggplot(aes(y = value, x = paste(variable,cluster,sep=" \n cluster \n"))) + geom_boxplot(color='#B31B1B', fill = '#F4C2C2', size=1.3, outlier.colour="black", outlier.size=4) + labs(x = "Year")+ ggtitle("Year by Cluster") +  theme(plot.title = element_text(hjust = 0.5))+ theme(plot.title = element_text(size=25))
+
+f <- wine2 %>%
+  mutate(cluster = k$cluster) %>%
+  select(cluster, comp_lat) %>% 
+  melt(id.vars = "cluster") %>%
+  ggplot(aes(y = value, x = paste(variable,cluster,sep=" \n cluster \n"))) + geom_boxplot(color='#B31B1B', fill = '#F4C2C2', size=1.3, outlier.colour="black", outlier.size=4) + labs(x = "Wineyard Latitude") + ggtitle("Wineyard Latitude by Cluster") +  theme(plot.title = element_text(hjust = 0.5))+ theme(plot.title = element_text(size=25))
+
+g <- wine2 %>%
+  mutate(cluster = k$cluster) %>%
+  select(cluster, comp_lon) %>% 
+  melt(id.vars = "cluster") %>%
+  ggplot(aes(y = value, x = paste(variable,cluster,sep=" \n cluster \n"))) + geom_boxplot(color='#B31B1B', fill = '#F4C2C2', size=1.3, outlier.colour="black", outlier.size=4) + labs(x = "Wineyard Longitude") + ggtitle("Wineyard Longitude by Cluster") +  theme(plot.title = element_text(hjust = 0.5))+ theme(plot.title = element_text(size=25))
+
+
+grid.arrange(a, b, c, d, f, g, nrow=2)
+
+# wine2 %>%
+#   mutate(cluster = k$cluster) %>%
+#   select(cluster,  comp_el) %>% 
+#   melt(id.vars = "cluster") %>%
+#   ggplot(aes(y = value, x = paste(variable,cluster,sep=" \n cluster \n"))) + geom_boxplot(color='#B31B1B', fill = '#F4C2C2', size=1.3, outlier.colour="black", outlier.size=4) + labs(x = "Wineyard Elevation") + ggtitle("Wineyard Elevation by Cluster") +  theme(plot.title = element_text(hjust = 0.5))
+
+```
+
+#Clustering techniques are crucial to data mining, especially when working with big data, due to their ability to create structure in a dataset, allowing the research to draw prelimnary insights. In other words, to narrow down a dataset to a managable size, clustering allows us to group observations that are alike. K-means is commonly used for splitting a dataset into a set number of groups. In the wine dataset, we are interested in understanding in identifying variables that could be strong predictors of the quality points a reviewer will score the wine. Our analysis indicated that the optimal number of groups the data could be divided into is five. Upon running a k-means, where we set k=5, we learned that the model believes that the 'Wine Taster Twitter Follower Numbers' is a strong predictor of how well the wine will be scored. For example, twitter users that have around a million twitter followers have almost exclusively reviewed wines after 2000 with an average price of 31.8 USD. Additionally, thought the latitude and longitude graphs we learned that cluster one has only reviewed wines from the coordinates 46.6, -119 which happens to fall on the west coast of the United States. By aggregating all this information, we are able to parse out a demographic of the wine reviewers.
+
