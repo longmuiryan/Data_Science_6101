@@ -134,7 +134,7 @@ wine2 <- subset(wine_reviews, select = c(country, points, price, province, year,
 #nndf1 <- subset(nutrient_orig, select = c(8:45))
 
 wine2 <- wine2 %>%
-mutate(
+dplyr::mutate(
 red = ifelse(color == "red", 1, 0),
 dom = ifelse(country == "US", 1, 0),
 p88 = ifelse(points > 88, 1, 0)
@@ -198,8 +198,8 @@ unloadPkg(psych)
 
 loadPkg(FNN)
 
-wine2 <- wine2 %>% select(-p88, everything())
-wine2 <- wine2 %>% select(-taster_name, everything())
+wine2 <- wine2 %>% dplyr::select(-p88, everything())
+wine2 <- wine2 %>% dplyr::select(-taster_name, everything())
 #str(wine2)
 scaled_wine2 <- as.data.frame(scale(wine2[1:8], center = TRUE, scale = TRUE))
 
@@ -259,46 +259,3 @@ xkabledply(confusionMatrixResultDf)
 ```
 
 
-# Logit for wine_reviews
-
-```{r preparing the data}
-#create subset data frame - identical to wine2
-wine3 <- subset(wine_reviews, select = c(country, points, price, province, year, color, taster_name, taster_following, composite_lon, composite_lat, composite_el))
-
-wine3$country<- as.factor(wine3$country)
-wine3$points<- as.factor(wine3$points)
-wine3$price<- as.factor(wine3$price)
-wine3$province<- as.factor(wine3$province)
-wine3$variety<- as.factor(wine3$variety)
-wine3$winery<- as.factor(wine3$winery)
-wine3$year<- as.factor(wine3$year)
-wine3$color<- as.factor(wine3$color)
-
-#remove NAs
-wine3 <- na.omit(wine3)
-
-sum(is.na(wine3))
-
-#display df structure
-str(wine3)
-
-
-```
-```{r Logit country}
-
-#logit_wine3 <- glm(points ~ ., data = wine3, binomial(link = "logit"))
-logit_wine3 <- glm(points ~ country, data = wine3, binomial(link = "logit"))
-summary(logit_wine3)
-exp(coef(logit_wine3))
-
-confint(logit_wine3)
-confint.default(logit_wine3)
-```
-```{r price}
-logit_wine3 <- glm(points ~ price, data = wine3, binomial(link = "logit"))
-summary(logit_wine3)
-exp(coef(logit_wine3))
-
-confint(logit_wine3)
-confint.default(logit_wine3)
-```
