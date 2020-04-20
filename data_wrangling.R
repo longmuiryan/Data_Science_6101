@@ -144,11 +144,11 @@ wine_reviews.df <- wine_reviews.df %>%
 # Popular Wine Critics 
 # =============================================================================
 
-# # who has reviewed the most wine? 
-# raw_wine_reviews.df %>% 
-#   group_by(taster_twitter_handle) %>% 
-#   tally() %>% arrange(desc(n))
-#
+# who has reviewed the most wine?
+raw_wine_reviews.df %>%
+  group_by(taster_name) %>%
+  tally() %>% arrange(desc(n))
+
 # # create variables based on reviewer following 
 # top_tasters <- c(
 #   "Alexander Peartree", "Anna Lee C. Iijima", "Anne Krebiehl MW",
@@ -194,12 +194,14 @@ wine_reviews.df <- wine_reviews.df %>%
     taster_name == "" ~ 0
   ))
 
+"Anne Krebiehl MW"
+
 # create dummy variabe for  if wine reviewed by reivew 
 wine_reviews.df <- wine_reviews.df %>% 
   mutate( 
     "Alexander Peartree" = ifelse(taster_name == "Alexander Peartree", 1, 0),
     "Anna Lee C. Iijima" = ifelse(taster_name == "Anna Lee C. Iijima", 1, 0),
-    "Anne Krebiehl MW" = ifelse(taster_name == "Anne Krebiehl MW", 1, 0),
+    "Anne Krebiehl MW" = ifelse(str_detect(taster_name, "Anne Krebiehl"), 1, 0),
     "Carrie Dykes" = ifelse(taster_name == "Carrie Dykes", 1, 0),
     "Christina Pickard" = ifelse(taster_name == "Christina Pickard", 1, 0),
     "Fiona Adams" = ifelse(taster_name == "Fiona Adams", 1, 0),
@@ -218,7 +220,6 @@ wine_reviews.df <- wine_reviews.df %>%
     "Virginie Boone" = ifelse(taster_name == "Virginie Boone", 1, 0)
   )
 
-
 # -----------------------------------------------------------------------------
 # Obtain Coordinates 
 # You're going to need to register an API key before you run the first part of the 
@@ -232,13 +233,13 @@ wine_reviews.df <- wine_reviews.df %>%
 # functions 
 # -----------------------------------------------------------------------------
 
-try_elevation <- function(x) {
-  out <- tryCatch(
-    expr = elevation(google_elevation(x)),
-    error = function(e){return(NA)}
-  )
-  return(out)
-}
+# try_elevation <- function(x) {
+#   out <- tryCatch(
+#     expr = elevation(google_elevation(x)),
+#     error = function(e){return(NA)}
+#   )
+#   return(out)
+# }
 
 # -----------------------------------------------------------------------------
 # query lon and lat from google maps 
@@ -347,15 +348,15 @@ wine_reviews.df <- wine_reviews.df %>%
 
 wine_reviews.df <- wine_reviews.df %>%
   mutate(
-    comp_lon =
+    lon =
       ifelse(!is.na(region_1_lon), region_1_lon,
         ifelse(!is.na(province_lon), province_lon,
           ifelse(!is.na(country_lon), country_lon, NA))),
-    comp_lat =
+    lat =
       ifelse(!is.na(region_1_lat), region_1_lat,
         ifelse(!is.na(province_lat), province_lat,
           ifelse(!is.na(country_lat), country_lat, NA))),
-    comp_el =
+    el =
       ifelse(!is.na(region_1_el), region_1_el,
         ifelse(!is.na(province_el), province_el,
           ifelse(!is.na(country_el), country_el, NA)))
@@ -365,6 +366,8 @@ wine_reviews.df <- wine_reviews.df %>%
 wine_reviews.df <- wine_reviews.df %>% 
   select(-c(region_1_lon, region_1_lat, province_lon, province_lat, 
     country_lon, country_lat, region_1_el, province_el, country_el))
+
+table(wine_reviews.df$Anne.Krebiehl.MW)
 
 # How well did we do? What proportion of observations were we able to 
 # identify elevation

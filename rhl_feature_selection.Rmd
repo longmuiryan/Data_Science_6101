@@ -5,7 +5,6 @@ date: "4/16/2020"
 output:
   html_document:
     code_folding: hide
-    number_sections: true
     toc: yes
     toc_depth: 3
     toc_float: yes
@@ -58,15 +57,13 @@ Recall that in the previous iteration of this project, Data Wine'ing leveraged w
 
 Data Wine'ing previously used the Wine Reviews dataset publish by Zach Thoutt on Kaggle. Although the Wine Reviews dataset provided the Data Wine'ing team with a wealth of clean and informative data to fuel it's analysis of wine quality, there remained challenges classifying wine variety and location. Data Wine'ing seized this opportunity to develop simple binary variables to denote whether a wine is red or white and whether a wine is produced domestically in the United States or abroad. Furthermore Data Wine'ing has taken advantage of the Google Maps API to create new variable measuring longitude, latitude and elevation. Lastly using the critic's twitter handle, Data Wine'ing has created a variable measuring the number of followers a given critic has. Note, the number of followers associated with each of the critics is recorded as of the today rather than at the time of the review. 
 
-### Summary Statistics 
-
 ```{r glance over the dataset}
 
 raw_wine_reviews.df <- read.csv("data/wine_reviews.csv")
 
 # counting missing values & get a glimpse of the data 
-raw_wine_reviews.df %>% summarise_all(function(x){sum((is.na(x)|x == ""))/nrow(.)})  
-raw_wine_reviews.df %>% glimpse()
+# raw_wine_reviews.df %>% summarise_all(function(x){sum((is.na(x)|x == ""))/nrow(.)})  
+# raw_wine_reviews.df %>% glimpse()
 
 ```
 
@@ -93,20 +90,20 @@ As one might have expected, the greatest correlation is between the dom and lat,
 # regular correlation analysis 
 # -----------------------------------------------------------------------------
 
-tasters <- c(
-  "Alexander Peartree", "Anna Lee C. Iijima", "Anne Krebiehl MW",
-  "Carrie Dykes", "Christina Pickard", "Fiona Adams", "Jeff Jenssen",
-  "Jim Gordon", "Joe Czerwinski", "Kerin O’Keefe", "Lauren Buzzeo",
-  "Matt Kettmann", "Michael Schachner", "Mike DeSimone", "Paul Gregutt",
-  "Roger Voss", "Sean P. Sullivan", "Susan Kostrzewa", "Virginie Boone"
-)
-flavors <- c(
- "acidity", "tannins", "cherry", "black", "ripe", "red", "spice", "oak", "fresh",
- "rich", "dry", "berry", "nose", "plum", "soft", "apple", "fruits",
- "sweet", "white", "crisp", "blackberry", "light", "dark", "citrus",
- "bodied", "vanilla", "bright", "pepper", "green", "lemon",
- "raspberry", "peach", "chocolate", "dried", "pear"
-)
+# tasters <- c(
+#   "Alexander Peartree", "Anna Lee C. Iijima", "Anne Krebiehl MW",
+#   "Carrie Dykes", "Christina Pickard", "Fiona Adams", "Jeff Jenssen",
+#   "Jim Gordon", "Joe Czerwinski", "Kerin O’Keefe", "Lauren Buzzeo",
+#   "Matt Kettmann", "Michael Schachner", "Mike DeSimone", "Paul Gregutt",
+#   "Roger Voss", "Sean P. Sullivan", "Susan Kostrzewa", "Virginie Boone"
+# )
+# flavors <- c(
+#  "acidity", "tannins", "cherry", "black", "ripe", "red", "spice", "oak", "fresh",
+#  "rich", "dry", "berry", "nose", "plum", "soft", "apple", "fruits",
+#  "sweet", "white", "crisp", "blackberry", "light", "dark", "citrus",
+#  "bodied", "vanilla", "bright", "pepper", "green", "lemon",
+#  "raspberry", "peach", "chocolate", "dried", "pear"
+# )
 
 wine_reviews.df <- raw_wine_reviews.df %>%
   mutate(
@@ -146,7 +143,7 @@ wine_reviews.df %>%
 
 ### Feature Selection 
 
-In this section Data Wine'ing employs mutivariate regression analysis to estimate the effect the variables discussed the previous section on points. Data Wine'ing conducted an exhaustive search of linear models on points usings the function `regsubsets()` from the the leaps package, keeping the best two subsets of explanatory variables for each size. Data Wine'ing then evaluated each of the models using Mallows's Cp (Cp), Bayesian Information Criterion (BIC) and the Adjusted R Squared. We found that the fill model minimized the Cp, BIC and Adjusted R Squared. The variance inflation factor (VIF) of the full model suggested no multicolearity betwen coefficients. Furthermore 
+In this section Data Wine'ing employs mutivariate regression analysis to estimate the effect the variables discussed the previous section on points. Data Wine'ing conducted an exhaustive search of linear models on points usings the function `regsubsets()` from the the leaps package, keeping the best two subsets of explanatory variables for each size. Data Wine'ing then evaluated each of the models using Mallows's Cp (Cp), Bayesian Information Criterion (BIC) and the Adjusted R Squared. We found that the fill model minimized the Cp, BIC and Adjusted R Squared. The variance inflation factor (VIF) of the full model suggested no multicolearity betwen coefficients. Furthermore when trained and tested on the seperate paritions of the data the full model peroformed similarly in the training (0.20) and test datasets (0.18). 
 
 ```{r feature selection (adjr2)}
 
@@ -166,44 +163,38 @@ p.info <- subsets(regsub,statistic = "cp", legend = F, min.size = 3, main = "Cp"
 abline(a = 1, b = 1, lty = 2)
 
 # return best model using each of the metrics
-which.max(summary(regsub)$adjr2)
-which.min(summary(regsub)$bic)
-which.min(summary(regsub)$cp)
+# which.max(summary(regsub)$adjr2)
+# which.min(summary(regsub)$bic)
+# which.min(summary(regsub)$cp)
 
 # build model
 adjr2.m <- lm(data = wine_reviews.df, formula = points ~ .)
 
 # check for multicollinearity
-vif(adjr2.m)
+# vif(adjr2.m)
 
 # -----------------------------------------------------------------------------
 # Test full model 
 # -----------------------------------------------------------------------------
 
-# Partition dataset 
+# Partition dataset
 set.seed(2)
-wine_reviews.df <- mutate(wine_reviews.df, id = row_number(points)) 
+wine_reviews.df <- mutate(wine_reviews.df, id = row_number(points))
 train.df <- wine_reviews.df %>% sample_frac(.75)
 test.df  <- anti_join(wine_reviews.df, train.df , by = 'id')
 
-# Estimate model 
+# Estimate model
 model.m <- lm(points ~ . -id, data = train.df)
 
 # Make predictions and compute the R2, RMSE and MAE
-predict.v <- model.m %>% predict(test.df) 
-data.frame(
-  R2 = R2(predict.v, test.df$points),
-  RMSE = RMSE(predict.v, test.df$points),
-  MAE = MAE(predict.v, test.df$points)
-)
+predict.v <- model.m %>% predict(test.df)
+# data.frame(
+#   R2 = R2(predict.v, test.df$points),
+#   RMSE = RMSE(predict.v, test.df$points),
+#   MAE = MAE(predict.v, test.df$points)
+# )
 
 ```
-
-
-### Lasso 
-
-### Comparitive Section 
-
 
 
 
