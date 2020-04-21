@@ -117,7 +117,9 @@ xkablevif = function(model) {
     kable_styling(bootstrap_options = "striped", full_width = F,
     position = "left")
   
-  #load packages 
+}
+
+ #load packages 
 loadPkg(tidyverse)
 loadPkg(gridExtra)
 loadPkg(ggExtra)
@@ -125,7 +127,6 @@ loadPkg(kableExtra)
 loadPkg(xtable)
 loadPkg(gganimate)
 loadPkg(dplyr)
-}
 ```
 
 # KNN for wine_reviews
@@ -257,5 +258,6 @@ for (kval in 3:15) {
 ```{r, results="asis"}
 xkabledply(confusionMatrixResultDf)
 ```
-
+# kNN Analysis
+K-Nearest Neighbors (kNN) is one of the simplest of the clustering algorithms.  A supervised technique, kNN is a non-parametric, instance-based learning algorithm that utilizes the whole dataset as the model. For classifying new data, to predict a label for an input data point, kNN examines the close or 'nearest' neighbors of the input data in the space of feature vectors then outputs the label that appeared most often in that space. Here, nine features from the WineEnthusiast Wine Reviews dataset were chosen for analysis to predict a tenth feature, Points (p88). Of the nine features chosen, taster_name was not numeric and therefore not appropriate for kNN analysis. The final model used eight features, or variables from approximately 24,000 obsersations, with k-values ranging from k=3 to k=15. The best overall model was generated using k=13. Using k=15 showed a slighty better recall rate, but a lower F1 score, and the difference did not justify the increased computational expense. The model was shown to be approximately 75% accurate at predicting wine from the dataset with a score greater-than, less-than, or equal to 88 points. The data was well balanced at a near 50/50 spilt, indicating our model was a significant improvement over the null model.
 
