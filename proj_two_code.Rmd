@@ -1,0 +1,459 @@
+---
+title: "Wine Feature Selection"
+author: "Ryan Longmuir"
+date: "4/16/2020"
+output:
+  html_document:
+    code_folding: hide
+    toc: yes
+    toc_depth: 3
+    toc_float: yes
+---
+
+
+```{r packages & functions , include = F}
+
+source("proj_two_functions.R")
+
+# -----------------------------------------------------------------------------
+# packages 
+# -----------------------------------------------------------------------------
+
+# ryan's section 
+loadPkg("tidyverse")
+loadPkg("kableExtra")
+loadPkg("corrplot")
+loadPkg("leaps")
+loadPkg("faraway")
+loadPkg("car")
+loadPkg("caret")
+loadPkg("glmnet")  # for ridge regression
+loadPkg("psych")   # for function tr() to compute trace of a matrix
+loadPkg("xtable")
+
+# michael's section 
+loadPkg(regclass)
+loadPkg(pROC)
+loadPkg(ResourceSelection)
+loadPkg(pscl)
+loadPkg(stringi)
+
+# rima's section 
+loadPkg(reshape2)
+loadPkg(factoextra)
+loadPkg(gridExtra)
+
+
+# ------------------------------------------------------------------------
+# knitr settings 
+# ------------------------------------------------------------------------
+
+knitr::opts_chunk$set(warning = F, message = F)
+options(scientific=T, digits = 3) 
+
+```
+
+### Research Question 
+
+Recall that in the previous iteration of this project, Data Wine'ing leveraged wine reviews collected from the magazine WineEnthusiast to conduct inferential statistics and uncover insights about wine quality. Data Wine'ing aimed to measure the degree of influence location had on the quality of a wine. More specifically Data Wine'ing posed the question "Are wines grown in prominent wine producing countries (e.g., Italy and France) rated higher than those grown in California?" Exploratory data analysis, inferential statistics and simple regression analysis revealed that location had a significant but subtle effect on wine quality, often less than one tenth of a point. This result has motivated Data Wine'ing's decision to broaden it's research question to explore the predictive power of the other variable available in the dataset. Data Wine'ing wishes to answer the following question "What are the factors that influence wine quality? Does there exist a limited number of factors that consumers can use to reliably choose wines of high quality?" 
+
+### Data Wrangling 
+
+Data Wine'ing previously used the Wine Reviews dataset publish by Zach Thoutt on Kaggle. Although the Wine Reviews dataset provided the Data Wine'ing team with a wealth of clean and informative data to fuel it's analysis of wine quality, there remained challenges classifying wine variety and location. Data Wine'ing seized this opportunity to develop simple binary variables to denote whether a wine is red or white and whether a wine is produced domestically in the United States or abroad. Furthermore Data Wine'ing has taken advantage of the Google Maps API to create new variable measuring longitude, latitude and elevation. Lastly using the critic's twitter handle, Data Wine'ing has created a variable measuring the number of followers a given critic has. Note, the number of followers associated with each of the critics is recorded as of the today rather than at the time of the review. 
+
+```{r glance over the dataset}
+
+raw_wine_reviews.df <- read.csv("data/wine_reviews.csv")
+
+# counting missing values & get a glimpse of the data 
+# raw_wine_reviews.df %>% summarise_all(function(x){sum((is.na(x)|x == ""))/nrow(.)})  
+# raw_wine_reviews.df %>% glimpse()
+
+```
+
+### Correlational Analysis 
+
+Below is a simple correlational analysis of the following variables 
+
+- points - The number of points awarded to the wine by WineEnthusiast 
+- price - The price of the wine at the time of the review 
+- year - The year the wine was produced, parsed from the title 
+- red -  Equal to 1 if the variety of wine is red and 0 othersie 
+- dom - Equal to 1 if the wine produced in the United States 
+- fol - The number of Twitter followers of the critic who wrote the review
+- lon - The longidtude of the region where the wine was produced 
+- lat - The latitude of the region where the wine was produced 
+- el - The elavation of the region wehre the wine was produced
+
+As one might have expected, the greatest correlation is between the dom and lat, lon and el. The correlation table is consistent with the results in the previous iteration of this project, price is has a moderate postive correlation and year has a weak negetive correlation with points. 
+
+
+```{r corrplot}
+
+# -----------------------------------------------------------------------------
+# regular correlation analysis 
+# -----------------------------------------------------------------------------
+
+# tasters <- c(
+#   "Alexander Peartree", "Anna Lee C. Iijima", "Anne Krebiehl MW",
+#   "Carrie Dykes", "Christina Pickard", "Fiona Adams", "Jeff Jenssen",
+#   "Jim Gordon", "Joe Czerwinski", "Kerin O’Keefe", "Lauren Buzzeo",
+#   "Matt Kettmann", "Michael Schachner", "Mike DeSimone", "Paul Gregutt",
+#   "Roger Voss", "Sean P. Sullivan", "Susan Kostrzewa", "Virginie Boone"
+# )
+# flavors <- c(
+#  "acidity", "tannins", "cherry", "black", "ripe", "red", "spice", "oak", "fresh",
+#  "rich", "dry", "berry", "nose", "plum", "soft", "apple", "fruits",
+#  "sweet", "white", "crisp", "blackberry", "light", "dark", "citrus",
+#  "bodied", "vanilla", "bright", "pepper", "green", "lemon",
+#  "raspberry", "peach", "chocolate", "dried", "pear"
+# )
+
+wine_reviews.df <- raw_wine_reviews.df %>%
+  mutate(
+    red = ifelse(color == "red", 1, 0),
+    dom = ifelse(country == "US", 1, 0)
+  ) %>%
+    rename(
+    fol = taster_following, name = taster_name
+  ) %>% 
+  select( # select variables for analysis
+    points, price, year, red, dom, fol,
+    el, lat, lon, Matt.Kettmann, Michael.Schachner    
+  ) %>% 
+  mutate_all(as.numeric) %>%
+  filter_all(function(x){!is.na(x)})
+
+# corrplot
+wine_reviews.df %>%
+  select(points, price, year, red, dom, fol, el, lat, lon) %>%
+  cor() %>% corrplot.mixed()
+
+# wine_reviews.df %>%
+#   select(points, Carrie.Dykes, Christina.Pickard, Fiona.Adams,
+#     Jeff.Jenssen, Jim.Gordon, Joe.Czerwinski, Kerin.O.Keefe, Lauren.Buzzeo,
+#     Matt.Kettmann, Michael.Schachner, Mike.DeSimone, Paul.Gregutt, Roger.Voss,
+#     Sean.P..Sullivan, Susan.Kostrzewa, Virginie.Boone ) %>%
+#   cor() %>% corrplot.mixed()
+
+# -----------------------------------------------------------------------------
+# critics and flavors 
+# -----------------------------------------------------------------------------
+
+# raw_wine_reviews.df %>%
+#   select(
+#     points, acidity, tannins, cherry, ripe, spice, oak, fresh, rich, dry,
+#     Alexander.Peartree, Anna.Lee.C..Iijima, Carrie.Dykes, Christina.Pickard, Fiona.Adams,
+#     Jeff.Jenssen, Jim.Gordon, Joe.Czerwinski, Kerin.O.Keefe, Lauren.Buzzeo, Mike.DeSimone,
+#     Paul.Gregutt, Roger.Voss
+#   ) %>% 
+#   filter_all(function(x){!is.na(x)}) %>%
+#   cor() %>% corrplot(method = "color")
+
+
+```
+
+### Feature Selection 
+
+In this section Data Wine'ing employs mutivariate regression analysis to estimate the effect the variables discussed the previous section on points. Data Wine'ing conducted an exhaustive search of linear models on points usings the function `regsubsets()` from the the leaps package, keeping the best two subsets of explanatory variables for each size. Data Wine'ing then evaluated each of the models using Mallows's Cp (Cp), Bayesian Information Criterion (BIC) and the Adjusted R Squared. We found that the fill model minimized the Cp, BIC and Adjusted R Squared. The variance inflation factor (VIF) of the full model suggested no multicolearity betwen coefficients. Furthermore when trained and tested on the seperate paritions of the data the full model peroformed similarly in the training (0.20) and test datasets (0.18). 
+
+```{r feature selection}
+
+# generate tables 
+regsub <- regsubsets(points ~ . , data = wine_reviews.df, method = "exhaustive", nbest = 2)
+summary(regsub)
+
+# make plots 
+plot(regsub, scale = "adjr2", main = "Adjusted R Squared")
+plot(regsub, scale = "bic", main = "BIC") 
+plot(regsub, scale = "Cp", main = "Cp") 
+
+# make more plots 
+p.info <- subsets(regsub, statistic = "adjr2", legend = F, min.size = 3, main = "Adjusted R Squared")
+p.info <- subsets(regsub,statistic = "bic", legend = F, min.size = 3, main = "BIC")
+p.info <- subsets(regsub,statistic = "cp", legend = F, min.size = 3, main = "Cp")
+abline(a = 1, b = 1, lty = 2)
+
+# return best model using each of the metrics
+which.max(summary(regsub)$adjr2)
+which.min(summary(regsub)$bic)
+which.min(summary(regsub)$cp)
+
+# build model
+adjr2.m <- lm(data = wine_reviews.df, formula = points ~ .)
+
+# check for multicollinearity
+# vif(adjr2.m)
+
+# -----------------------------------------------------------------------------
+# Test full model 
+# -----------------------------------------------------------------------------
+
+# Partition dataset
+set.seed(2)
+wine_reviews.df <- mutate(wine_reviews.df, id = row_number(points))
+train.df <- wine_reviews.df %>% sample_frac(.75)
+test.df  <- anti_join(wine_reviews.df, train.df , by = 'id')
+
+# Estimate model
+model.m <- lm(points ~ . -id, data = train.df)
+
+# Make predictions and compute the R2, RMSE and MAE
+predict.v <- model.m %>% predict(test.df)
+data.frame(
+  R2 = R2(predict.v, test.df$points),
+  RMSE = RMSE(predict.v, test.df$points),
+  MAE = MAE(predict.v, test.df$points)
+)
+
+# output regression table 
+wine_reviews.df %>% 
+  lm(formula = points ~ . -id -el -lon) %>% 
+  xtable() %>% 
+  kable(digits = 5) %>%
+  kable_styling(bootstrap_options = "striped", full_width = F,
+  position = "left")
+
+```
+
+### Logistic Regressions 
+
+```{r logit}
+
+# read in & clean daa 
+wine_reviews.df <-  raw_wine_reviews.df %>%
+  mutate(
+    red = as.factor(ifelse(color == "red", 1, 0)),
+    dom = as.factor(ifelse(country == "US", 1, 0)),
+    p88 = ifelse(points > 88, 1, 0)
+  ) %>%
+  dplyr::select(
+    points, price, year, red, dom, taster_following, el, lat, lon, p88, taster_name
+  ) %>% 
+  filter_all(function(x){!is.na(x)})
+
+# run logit 
+glm <- glm(formula = p88 ~ . -points, data = wine_reviews.df, family = binomial(link="logit"))
+# exp(coef(glm))
+xkabledply(glm)
+
+```
+Recall that we are interested in informing wine consumers what the best predictors are for selecting a quality wine, whether they're buying at their local wine store, or tasting wine at their favorite farmers market, we'd like to determine a metric for what really does constitute a "good" wine. The original dataset `wine_reviews` contains a lot of information across 72 variables, but for our purposes we've narrowed the dataset down to 11 (stored in `wine_reviews.df`) for the generalized linear regression: 
+`
+* `points`
+* `price`
+* `year`
+* `red`
+* `dom`
+* `taster_following`
+* `comp_el`
+* `comp_lat`
+* `comp_lon`
+* `p88` (outcome variable)
+* `taster_name`
+
+New to this dataset are binary, factor-level variables `red`, which is derived from `color` to determine if the reviewed wine is red, `dom`, which uses `country` to indicate whether the reviewed wine is from the United States, and, importantly, what will be the output variable, `p88`, which shows if the reviewed wine has a score of 89 points or greater. **As mentioned**, an 88 point cutoff was selected as it nearly slices the dataset in half and makes for good use in model training and testing, including the fact that this score is a toes the line between the delineation for what is "very good" and "excellent" wines (and also is just above the average score for all wine enthusiast reviews https://www.wine-searcher.com/critics-17-wine+enthusiast).
+
+Since wines are scored by each reviewer, it is necessary to understand the factors that influence the score a wine is given. A generalized linear model was built to predict the effect of the aforementioned variables on `p88`, or whether or not a wine that is reviewed receives a score of 89 or better. 38,675 NA values were removed from the dataset from the total 129971 observations, or 26% of the data. The model `glm(formula = p88 ~ . -points, data = wine_reviews.df, family = binomial(link="logit"))` was run to estimate `p88` and output can be found in **table #**. 
+
+We observe significant coefficients for all predictor variables, with the exception of `comp_lat`, latitude at which the reviewed wine was grown, and wine reviewers `taster_nameChristina Pickard` and `taster_nameVirginie Boone`. Notably, however, `taster_following`, `comp_el`, `comp_lat`, `comp_lon` provide no or a neglible effect on the odds-ratio for `p88` i.e., when points increase by one unit, these variables have no effect on the odds-ratio. This is interesting given the long-studied effects of geography on wine production - one may expect that growing wine in a place better-suited for growing grapes would produce a wine that is rated more highly than others, but our model suggests location has no effect on how point value assigned to the wine reviewed. This begs the question of what effect a particular reviewer has on point assignment. As we can see from the results in the model, and the odds-ratio coefficients, the levels `tasterName` i.e., those who reviewed the wine, play a signficiant role in predicting if a wine will be scored 89 points or better. More research is required to come a granlar analysis on the what exactly may influence the bias an individual reviewer has one a wine. 
+**NOTE: If true, this may be a good place to discuss/analyze words in an individuals reviewer's review**
+
+The confusion matrix for the model in **table #** shows that the model was run with 73.5% accurarcy; the ROC-AUC curve accompanying this model returns a value 0.82, suggesting the model performs well when distinguishing between wines scored 89 or better; however, the result Hosmer-Lemeshow Goodness of Fit Test for the model suggests that there exists a significant difference between our model the observed data (p < .05). Further research and evaluation is required to build a model that can pass this test.
+
+**Question:** why is the glm and test/train glm returning such high accuracy, but the Hosmer-Lemeshow Goodness of Fit Test for the model has a p < 0.05?
+
+```{r model eval}
+# Accuracy 
+cm <- regclass::confusion_matrix(glm)
+accuracy_glm <- (cm[1,1]+cm[2,2])/(cm[1,1] + cm[1,2] + cm[2,1] + cm[2,2])*100
+accuracy_glm # 73.5% accurate
+
+# hoslem text 
+ResourceSelection::hoslem.test(wine_reviews.df$p88, fitted(glm))
+
+# psuedo R^2
+pscl::pR2(glm)
+
+# ROC-AUC
+wine_reviews.df$prob <- predict(glm, type=c("response"))
+roc <- pROC::roc(p88 ~ prob, data=wine_reviews.df)
+roc # ROC-AUC value = 0.82
+plot(roc) 
+```
+
+```{r train and test}
+# Addapted from HW09 Q6
+set.seed(50)
+
+# scale 
+wine_reviews_z <- uzscale(wine_reviews.df, append=0, excl=c("p88"))
+
+# sample and subset 
+wine_reviews_sample <- sample(2, nrow(wine_reviews_z), replace = TRUE, prob = c(0.75, 0.25))
+wine_reviews_train <- filter(wine_reviews_z, wine_reviews_sample == 1) 
+wine_reviews_test <- filter(wine_reviews_z, wine_reviews_sample == 2)
+
+# estimate logistic model using training data 
+wine_reviews_logit <- glm(p88 ~ . -points, data = wine_reviews_train, family = binomial)
+summary(wine_reviews_logit)
+
+wine_reviews_logit$xlevels[["taster_name"]] <- union(wine_reviews_logit$xlevels[["taster_name"]], levels(wine_reviews_test$taster_name))
+
+# use cutoff rule to classify type 
+wine_reviews_test <- wine_reviews_test %>%
+  mutate(
+    p88_logit_p = predict(wine_reviews_logit, wine_reviews_test, type = c("response")),
+    p88_logit = ifelse(p88_logit_p > 0.5, 1, 0) 
+  )
+
+# calculate accuracy
+t <- table(wine_reviews_test$p88, wine_reviews_test$p88_logit)
+(t[1,1] + t[2,2]) / nrow(wine_reviews_test)
+```
+
+### K Means 
+
+```{r clean data}
+
+winedata <- raw_wine_reviews.df
+wine <- winedata %>% 
+ # dplyr::mutate(
+ #    red = ifelse(color == "red", 1, 0),
+ #    dom = ifelse(country == "US", 1, 0)
+ #  ) %>%
+ dplyr::select(points, price, year, taster_following, el, lat, lon) %>% 
+ mutate_all(as.numeric) %>% 
+ filter_all(function(x){!is.na(x)}) 
+
+# Remove Outliers
+outliers <- boxplot(wine$price, plot=FALSE)$out
+wine2<- wine[-which(wine$price %in% outliers),]
+
+```
+
+### K-Means
+
+```{r}
+set.seed(1000)
+# wine_review <- scale(wine2)
+# head(wine)
+
+# function to compute total within-cluster sum of square
+wss <- function(k) {
+  kmeans(wine2, k, nstart = 10 )$tot.withinss
+}
+
+# Compute and plot wss for k = 1 to k = 15
+k.values <- 1:15
+
+# extract wss for 2-15 clusters
+wss_values <- map_dbl(k.values, wss)
+
+plot(k.values, wss_values,
+  type = "b", pch = 19, frame = FALSE,
+  xlab = "Number of clusters K",
+  ylab = "Total within-clusters sum of squares"
+)
+
+#nstart is just the number of configurations, we dont really need that
+k <- kmeans(wine2, centers = 5)
+# print(k)
+
+# plots to compare
+fviz_cluster(k, geom = "point",  data = wine2) + ggtitle("k = 5")
+
+#Cluster Mean
+k$centers
+#Number of values in each cluster
+k$size
+
+# https://uc-r.github.io/kmeans_clustering
+```
+
+```{r fig.width = 20}
+
+# mean
+wine2 %>%
+  mutate(Cluster = k$cluster) %>%
+  group_by(Cluster) %>%
+  summarize_all("mean")
+
+# median
+wine2 %>%
+  mutate(Cluster = k$cluster) %>%
+  group_by(Cluster) %>%
+  summarize_all("median")
+
+# max
+wine2 %>%
+  mutate(Cluster = k$cluster) %>%
+  group_by(Cluster) %>%
+  summarize_all("max")
+
+# min
+wine2 %>%
+  mutate(Cluster = k$cluster) %>%
+  group_by(Cluster) %>%
+  summarize_all("min")
+
+
+```
+
+
+```{r fig.width = 20}
+
+a <- wine2 %>%
+  mutate(cluster = k$cluster) %>%
+  select(cluster, price) %>% 
+  melt(id.vars = "cluster") %>%
+  ggplot(aes(y = value, x = paste(variable,cluster,sep=" \n cluster \n"))) + geom_boxplot(color='#B31B1B', fill = '#F4C2C2', size=1.3, outlier.colour="black", outlier.size=4) + labs(x = "Price") + ggtitle("Price by Cluster") +  theme(plot.title = element_text(hjust = 0.5)) + theme(plot.title = element_text(size=25))
+
+b <- wine2 %>%
+  mutate(cluster = k$cluster) %>%
+  select(cluster, points) %>% 
+  melt(id.vars = "cluster") %>%
+  ggplot(aes(y = value, x = paste(variable,cluster,sep=" \n cluster \n"))) + geom_boxplot(color='#B31B1B', fill = '#F4C2C2', size=1.3, outlier.colour="black", outlier.size=4) + labs(x = "Points") + ggtitle("Points by Cluster") +  theme(plot.title = element_text(hjust = 0.5))+ theme(plot.title = element_text(size=25))
+
+c <- wine2 %>%
+  mutate(cluster = k$cluster) %>%
+  select(cluster, taster_following) %>% 
+  melt(id.vars = "cluster") %>%
+  ggplot(aes(y = value, x = paste(variable,cluster,sep=" \n cluster \n"))) + geom_boxplot(color='#B31B1B', fill = '#F4C2C2', size=1.3, outlier.colour="black", outlier.size=4) + labs(x = "Following") + ggtitle("Following by Cluster") +  theme(plot.title = element_text(hjust = 0.5))+ theme(plot.title = element_text(size=25))
+
+d <- wine2 %>%
+  mutate(cluster = k$cluster) %>%
+  select(cluster, year) %>% 
+  melt(id.vars = "cluster") %>%
+  ggplot(aes(y = value, x = paste(variable,cluster,sep=" \n cluster \n"))) + geom_boxplot(color='#B31B1B', fill = '#F4C2C2', size=1.3, outlier.colour="black", outlier.size=4) + labs(x = "Year")+ ggtitle("Year by Cluster") +  theme(plot.title = element_text(hjust = 0.5))+ theme(plot.title = element_text(size=25))
+
+f <- wine2 %>%
+  mutate(cluster = k$cluster) %>%
+  select(cluster, lat) %>% 
+  melt(id.vars = "cluster") %>%
+  ggplot(aes(y = value, x = paste(variable,cluster,sep=" \n cluster \n"))) + geom_boxplot(color='#B31B1B', fill = '#F4C2C2', size=1.3, outlier.colour="black", outlier.size=4) + labs(x = "Latitude") + ggtitle("Latitude by Cluster") +  theme(plot.title = element_text(hjust = 0.5))+ theme(plot.title = element_text(size=25))
+
+g <- wine2 %>%
+  mutate(cluster = k$cluster) %>%
+  select(cluster, lon) %>% 
+  melt(id.vars = "cluster") %>%
+  ggplot(aes(y = value, x = paste(variable,cluster,sep=" \n cluster \n"))) + geom_boxplot(color='#B31B1B', fill = '#F4C2C2', size=1.3, outlier.colour="black", outlier.size=4) + labs(x = "Longitude") + ggtitle("Longitude by Cluster") +  theme(plot.title = element_text(hjust = 0.5))+ theme(plot.title = element_text(size=25))
+
+
+grid.arrange(a, b, ncol = 2)
+grid.arrange(c, d, ncol = 2)
+grid.arrange(f, g, ncol = 2)
+
+
+```
+
+Clustering techniques are crucial to data mining, especially when working with big data, due to their ability to create structure in a dataset, allowing the research to draw prelimnary insights. In other words, to narrow down a dataset to a managable size, clustering allows us to group observations that are alike. K-means is commonly used for splitting a dataset into a set number of groups. In the wine dataset, we are interested in understanding in identifying variables that could be strong predictors of the quality points a reviewer will score the wine. Our analysis indicated that the optimal number of groups the data could be divided into is five. Upon running a k-means, where we set k=5, we learned that the model believes that the 'Wine Taster Twitter Follower Numbers' is a strong predictor of how well the wine will be scored. For example, twitter users that have around a million twitter followers have almost exclusively reviewed wines after 2000 with an average price of 31.8 USD. Additionally, thought the latitude and longitude graphs we learned that cluster one has only reviewed wines from the coordinates 46.6, -119 which happens to fall on the west coast of the United States. By aggregating all this information, we are able to parse out a demographic of the wine reviewers.
+
+
+
+
+
+
+
+
+
