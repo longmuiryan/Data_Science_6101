@@ -13,7 +13,8 @@ output:
 
 ```{r packages & functions , include = F}
 
-source("proj_two_functions.R")
+setwd("~/Desktop/Git/edwinbet")
+source("project_2/proj_two_functions.R")
 
 # -----------------------------------------------------------------------------
 # packages 
@@ -43,6 +44,10 @@ loadPkg(reshape2)
 loadPkg(factoextra)
 loadPkg(gridExtra)
 
+# bryan's sectoin 
+loadPkg(FNN)
+loadPkg(gmodels)
+
 
 # ------------------------------------------------------------------------
 # knitr settings 
@@ -53,17 +58,22 @@ options(scientific=T, digits = 3)
 
 ```
 
+<!-----------------------------------------------------------------------------
+Ryan 
+------------------------------------------------------------------------------> 
+
+
 ### Research Question 
 
 Recall that in the previous iteration of this project, Data Wine'ing leveraged wine reviews collected from the magazine WineEnthusiast to conduct inferential statistics and uncover insights about wine quality. Data Wine'ing aimed to measure the degree of influence location had on the quality of a wine. More specifically Data Wine'ing posed the question "Are wines grown in prominent wine producing countries (e.g., Italy and France) rated higher than those grown in California?" Exploratory data analysis, inferential statistics and simple regression analysis revealed that location had a significant but subtle effect on wine quality, often less than one tenth of a point. This result has motivated Data Wine'ing's decision to broaden it's research question to explore the predictive power of the other variable available in the dataset. Data Wine'ing wishes to answer the following question "What are the factors that influence wine quality? Does there exist a limited number of factors that consumers can use to reliably choose wines of high quality?" 
 
 ### Data Wrangling 
 
-Data Wine'ing previously used the Wine Reviews dataset publish by Zach Thoutt on Kaggle. Although the Wine Reviews dataset provided the Data Wine'ing team with a wealth of clean and informative data to fuel it's analysis of wine quality, there remained challenges classifying wine variety and location. Data Wine'ing seized this opportunity to develop simple binary variables to denote whether a wine is red or white and whether a wine is produced domestically in the United States or abroad. Furthermore Data Wine'ing has taken advantage of the Google Maps API to create new variable measuring longitude, latitude and elevation. Lastly using the critic's twitter handle, Data Wine'ing has created a variable measuring the number of followers a given critic has. Note, the number of followers associated with each of the critics is recorded as of the today rather than at the time of the review. 
+Data Wine'ing previously used the Wine Reviews dataset publish by Zach Thoutt on Kaggle. Although the Wine Reviews dataset provided the Data Wine'ing team with a wealth of clean and informative data to fuel it's analysis of wine quality, there remained challenges classifying wine variety and location. Data Wine'ing seized this opportunity to develop simple binary variables to denote whether a wine is red or white and whether a wine is produced domestically in the United States or abroad. Furthermore Data Wine'ing has taken advantage of the Google Maps API to create new variable measuring longitude,comp_lonitude and elevation. Lastly using the critic's twitter handle, Data Wine'ing has created a variable measuring the number of followers a given critic has. Note, the number of followers associated with each of the critics is recorded as of the today rather than at the time of the review. 
 
 ```{r glance over the dataset}
 
-raw_wine_reviews.df <- read.csv("wine_reviews.csv")
+raw_wine_reviews.df <- read.csv("../data/wine_reviews.csv")
 
 # counting missing values & get a glimpse of the data 
 # raw_wine_reviews.df %>% summarise_all(function(x){sum((is.na(x)|x == ""))/nrow(.)})  
@@ -115,9 +125,10 @@ wine_reviews.df <- raw_wine_reviews.df %>%
     dom = ifelse(country == "US", 1, 0)
   ) %>%
     rename(
-    fol = taster_following, name = taster_name
+    fol = taster_following, name = taster_name, 
+    lat = comp_lat, lon = comp_lon, el = comp_el 
   ) %>% 
-  select( # select variables for analysis
+  select(
     points, price, year, red, dom, fol,
     el, lat, lon, Matt.Kettmann, Michael.Schachner    
   ) %>% 
@@ -215,6 +226,9 @@ wine_reviews.df %>%
   position = "left")
 
 ```
+<!-----------------------------------------------------------------------------
+Michael  
+------------------------------------------------------------------------------> 
 
 ### Logistic Regressions 
 
@@ -228,7 +242,7 @@ wine_reviews.df <-  raw_wine_reviews.df %>%
     p88 = ifelse(points > 88, 1, 0)
   ) %>%
   dplyr::select(
-    points, price, year, red, dom, taster_following, el, lat, lon, p88, taster_name
+    points, price, year, red, dom, taster_following, comp_el, comp_lat, comp_lon, p88, taster_name
   ) %>% 
   filter_all(function(x){!is.na(x)})
 
@@ -312,6 +326,105 @@ t <- table(wine_reviews_test$p88, wine_reviews_test$p88_logit)
 (t[1,1] + t[2,2]) / nrow(wine_reviews_test)
 ```
 
+<!-----------------------------------------------------------------------------
+Bryan
+------------------------------------------------------------------------------> 
+
+### K Nearst Neighbor 
+
+K-Nearest Neighbors (kNN) is one of the simplest of the clustering algorithms.  A supervised technique, kNN is a non-parametric, instance-based learning algorithm that utilizes the whole dataset as the model. For classifying new data, to predict a label for an input data point, kNN examines the close or 'nearest' neighbors of the input data in the space of feature vectors then outputs the label that appeared most often in that space. Here, nine features from the WineEnthusiast Wine Reviews dataset were chosen for analysis to predict a tenth feature, Points (p88). Of the nine features chosen, taster_name was not numeric and therefore not appropriate for kNN analysis. The final model used eight features, or variables from approximately 24,000 obsersations, with k-values ranging from k=3 to k=15. The best overall model was generated using k=13. Using k=15 showed a slighty better recall rate, but a lower F1 score, and the difference did not justify the increased computational expense. The model was shown to be approximately 75% accurate at predicting wine from the dataset with a score greater-than, less-than, or equal to 88 points. The data was well balanced at a near 50/50 spilt, indicating our model was a significant improvement over the null model.
+
+```{r byan data step}
+
+# wrangle data 
+wine2 <- raw_wine_reviews.df %>%
+dplyr::mutate(
+red = ifelse(color == "red", 1, 0),
+dom = ifelse(country == "US", 1, 0),
+p88 = ifelse(points > 88, 1, 0)
+) %>%
+dplyr::select(
+p88, price, year, red, dom, taster_following, taster_name,
+comp_lon, comp_lat, comp_el, p88
+) %>% 
+filter_all(function(x) !is.na(x))
+
+
+# structure and summary of the table 
+# done above some I'm commenting it out 
+# summary(wine2)
+# xkablesummary(wine2)
+
+```
+
+
+
+```{r bryan knn}
+
+# chunck 1 -----------------------------------------------------------------------
+
+wine2 <- wine2 %>% dplyr::select(-p88, everything())
+wine2 <- wine2 %>% dplyr::select(-taster_name, everything())
+#str(wine2)
+scaled_wine2 <- as.data.frame(scale(wine2[1:8], center = TRUE, scale = TRUE))
+
+set.seed(1000)
+wine2_sample <- sample(2, nrow(scaled_wine2), replace=TRUE, prob=c(0.75, 0.25))
+
+wine2_training <- scaled_wine2[wine2_sample==1, 1:8]
+wine2_test <- scaled_wine2[wine2_sample==2, 1:8]
+
+
+# chunck 2 -----------------------------------------------------------------------
+
+wine2.trainLabels <- wine2[wine2_sample==1, 9]
+wine2.testLabels <- wine2[wine2_sample==2, 9]
+
+# chunck 3 -----------------------------------------------------------------------
+
+# running the model 
+wine2_pred <- knn(train = wine2_training, test = wine2_test, cl=wine2.trainLabels, k=3)
+#wine2_pred
+wine2PREDCross <- CrossTable(wine2.testLabels, wine2_pred, prop.chisq = FALSE)
+wine2PREDCross
+
+# create an empty dataframe to store the results from confusion matrices
+confusionMatrixResultDf = data.frame( k=numeric(0), Accuracy= numeric(0), Sensitivity=numeric(0), Specificity=numeric(0), Pos.Pred.Value=numeric(0), Neg.Pred.Value=numeric(0), Precision=numeric(0), Recall=numeric(0), F1=numeric(0), Prevalence=numeric(0), Detection.Rate=numeric(0), Detection.Prevalence=numeric(0), Balanced.Accuracy=numeric(0), row.names = NULL )
+
+for (kval in 3:15) {
+  #PimaPredict <- knn(train = zpima_Xtrain, test = zpima_Xtest, cl=zpima_ytrain, k=kval) 
+  wine2_pred <- knn(train = wine2_training, test = wine2_test, cl=wine2.trainLabels, k=kval)
+  #pimaXtable <- CrossTable(zpima_ytest, PimaPredict, prop.chisq = FALSE)
+  wine2PREDCross <- CrossTable(wine2.testLabels, wine2_pred, prop.chisq = FALSE)
+  print( paste("k = ", kval) )
+  #pimaXtable
+  wine2PREDCross
+  # 
+  #cm = confusionMatrix(PimaPredict, reference = zpima_ytest ) # from caret library
+  cm = confusionMatrix(wine2_pred, reference = factor(wine2.testLabels )) # from caret library
+  # 
+  cmaccu = cm$overall['Accuracy']
+  print( paste("Total Accuracy = ", cmaccu ) )
+  # 
+  cmt = data.frame(k=kval, Accuracy = cmaccu, row.names = NULL ) # initialize a row of the metrics 
+  cmt = cbind( cmt, data.frame( t(cm$byClass) ) ) # the dataframe of the transpose, with k valued added in front
+  confusionMatrixResultDf = rbind(confusionMatrixResultDf, cmt)
+  # print("Other metrics : ")
+}
+
+xkabledply(confusionMatrixResultDf)
+
+
+```
+
+
+
+
+
+<!-----------------------------------------------------------------------------
+Reema 
+------------------------------------------------------------------------------> 
+
 ### K Means 
 
 ```{r clean data}
@@ -322,7 +435,7 @@ wine <- winedata %>%
  #    red = ifelse(color == "red", 1, 0),
  #    dom = ifelse(country == "US", 1, 0)
  #  ) %>%
- dplyr::select(points, price, year, taster_following, el, lat, lon) %>% 
+ dplyr::select(points, price, year, taster_following, comp_el, comp_lat, comp_lon) %>% 
  mutate_all(as.numeric) %>% 
  filter_all(function(x){!is.na(x)}) 
 
@@ -429,13 +542,13 @@ d <- wine2 %>%
 
 f <- wine2 %>%
   mutate(cluster = k$cluster) %>%
-  select(cluster, lat) %>% 
+  select(cluster, comp_lat) %>% 
   melt(id.vars = "cluster") %>%
   ggplot(aes(y = value, x = paste(variable,cluster,sep=" \n cluster \n"))) + geom_boxplot(color='#B31B1B', fill = '#F4C2C2', size=1.3, outlier.colour="black", outlier.size=4) + labs(x = "Latitude") + ggtitle("Latitude by Cluster") +  theme(plot.title = element_text(hjust = 0.5))+ theme(plot.title = element_text(size=25))
 
 g <- wine2 %>%
   mutate(cluster = k$cluster) %>%
-  select(cluster, lon) %>% 
+  select(cluster,comp_lon) %>% 
   melt(id.vars = "cluster") %>%
   ggplot(aes(y = value, x = paste(variable,cluster,sep=" \n cluster \n"))) + geom_boxplot(color='#B31B1B', fill = '#F4C2C2', size=1.3, outlier.colour="black", outlier.size=4) + labs(x = "Longitude") + ggtitle("Longitude by Cluster") +  theme(plot.title = element_text(hjust = 0.5))+ theme(plot.title = element_text(size=25))
 

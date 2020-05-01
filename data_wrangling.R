@@ -104,50 +104,49 @@ wine_reviews.df %>% summarise(populated_percent = 1 - sum(is.na(color))/nrow(.))
 #  print(x)
 # }
 
-wine_reviews.df <- wine_reviews.df %>% 
-  mutate( 
-    acidity = ifelse(str_detect(description, "acidity"), 1, 0),
-    tannins = ifelse(str_detect(description, "tannins"), 1, 0),
-    cherry = ifelse(str_detect(description, "cherry"), 1, 0),
-    ripe = ifelse(str_detect(description, "ripe"), 1, 0),
-    spice = ifelse(str_detect(description, "spice"), 1, 0),
-    oak = ifelse(str_detect(description, "oak"), 1, 0),
-    fresh = ifelse(str_detect(description, "fresh"), 1, 0),
-    rich = ifelse(str_detect(description, "rich"), 1, 0),
-    dry = ifelse(str_detect(description, "dry"), 1, 0),
-    berry = ifelse(str_detect(description, "berry"), 1, 0),
-    plum = ifelse(str_detect(description, "plum"), 1, 0),
-    soft = ifelse(str_detect(description, "soft"), 1, 0),
-    apple = ifelse(str_detect(description, "apple"), 1, 0),
-    fruits = ifelse(str_detect(description, "fruits"), 1, 0),
-    sweet = ifelse(str_detect(description, "sweet"), 1, 0),
-    crisp = ifelse(str_detect(description, "crisp"), 1, 0),
-    blackberry = ifelse(str_detect(description, "blackberry"), 1, 0),
-    light = ifelse(str_detect(description, "light"), 1, 0),
-    dark = ifelse(str_detect(description, "dark"), 1, 0),
-    citrus = ifelse(str_detect(description, "citrus"), 1, 0),
-    bodied = ifelse(str_detect(description, "bodied"), 1, 0),
-    vanilla = ifelse(str_detect(description, "vanilla"), 1, 0),
-    bright = ifelse(str_detect(description, "bright"), 1, 0),
-    pepper = ifelse(str_detect(description, "pepper"), 1, 0),
-    green = ifelse(str_detect(description, "green"), 1, 0),
-    lemon = ifelse(str_detect(description, "lemon"), 1, 0),
-    raspberry = ifelse(str_detect(description, "raspberry"), 1, 0),
-    peach = ifelse(str_detect(description, "peach"), 1, 0),
-    chocolate = ifelse(str_detect(description, "chocolate"), 1, 0),
-    dried = ifelse(str_detect(description, "dried"), 1, 0),
-    pear = ifelse(str_detect(description, "pear"), 1, 0)
-  )
-
+# wine_reviews.df <- wine_reviews.df %>% 
+#   mutate( 
+#     acidity = ifelse(str_detect(description, "acidity"), 1, 0),
+#     tannins = ifelse(str_detect(description, "tannins"), 1, 0),
+#     cherry = ifelse(str_detect(description, "cherry"), 1, 0),
+#     ripe = ifelse(str_detect(description, "ripe"), 1, 0),
+#     spice = ifelse(str_detect(description, "spice"), 1, 0),
+#     oak = ifelse(str_detect(description, "oak"), 1, 0),
+#     fresh = ifelse(str_detect(description, "fresh"), 1, 0),
+#     rich = ifelse(str_detect(description, "rich"), 1, 0),
+#     dry = ifelse(str_detect(description, "dry"), 1, 0),
+#     berry = ifelse(str_detect(description, "berry"), 1, 0),
+#     plum = ifelse(str_detect(description, "plum"), 1, 0),
+#     soft = ifelse(str_detect(description, "soft"), 1, 0),
+#     apple = ifelse(str_detect(description, "apple"), 1, 0),
+#     fruits = ifelse(str_detect(description, "fruits"), 1, 0),
+#     sweet = ifelse(str_detect(description, "sweet"), 1, 0),
+#     crisp = ifelse(str_detect(description, "crisp"), 1, 0),
+#     blackberry = ifelse(str_detect(description, "blackberry"), 1, 0),
+#     light = ifelse(str_detect(description, "light"), 1, 0),
+#     dark = ifelse(str_detect(description, "dark"), 1, 0),
+#     citrus = ifelse(str_detect(description, "citrus"), 1, 0),
+#     bodied = ifelse(str_detect(description, "bodied"), 1, 0),
+#     vanilla = ifelse(str_detect(description, "vanilla"), 1, 0),
+#     bright = ifelse(str_detect(description, "bright"), 1, 0),
+#     pepper = ifelse(str_detect(description, "pepper"), 1, 0),
+#     green = ifelse(str_detect(description, "green"), 1, 0),
+#     lemon = ifelse(str_detect(description, "lemon"), 1, 0),
+#     raspberry = ifelse(str_detect(description, "raspberry"), 1, 0),
+#     peach = ifelse(str_detect(description, "peach"), 1, 0),
+#     chocolate = ifelse(str_detect(description, "chocolate"), 1, 0),
+#     dried = ifelse(str_detect(description, "dried"), 1, 0),
+#     pear = ifelse(str_detect(description, "pear"), 1, 0)
+#   )
 
 # =============================================================================
 # Popular Wine Critics 
 # =============================================================================
 
 # who has reviewed the most wine?
-raw_wine_reviews.df %>%
-  group_by(taster_name) %>%
-  tally() %>% arrange(desc(n))
+# raw_wine_reviews.df %>%
+#   group_by(taster_name) %>%
+#   tally() %>% arrange(desc(n))
 
 # # create variables based on reviewer following 
 # top_tasters <- c(
@@ -348,15 +347,15 @@ wine_reviews.df <- wine_reviews.df %>%
 
 wine_reviews.df <- wine_reviews.df %>%
   mutate(
-    lon =
+    comp_lon =
       ifelse(!is.na(region_1_lon), region_1_lon,
         ifelse(!is.na(province_lon), province_lon,
           ifelse(!is.na(country_lon), country_lon, NA))),
-    lat =
+    comp_lat =
       ifelse(!is.na(region_1_lat), region_1_lat,
         ifelse(!is.na(province_lat), province_lat,
           ifelse(!is.na(country_lat), country_lat, NA))),
-    el =
+    comp_el =
       ifelse(!is.na(region_1_el), region_1_el,
         ifelse(!is.na(province_el), province_el,
           ifelse(!is.na(country_el), country_el, NA)))
@@ -366,8 +365,6 @@ wine_reviews.df <- wine_reviews.df %>%
 wine_reviews.df <- wine_reviews.df %>% 
   select(-c(region_1_lon, region_1_lat, province_lon, province_lat, 
     country_lon, country_lat, region_1_el, province_el, country_el))
-
-table(wine_reviews.df$Anne.Krebiehl.MW)
 
 # How well did we do? What proportion of observations were we able to 
 # identify elevation
