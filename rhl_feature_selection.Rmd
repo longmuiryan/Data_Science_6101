@@ -35,13 +35,17 @@ loadPkg = function(pkg, character.only = FALSE) {
 # packages 
 # -----------------------------------------------------------------------------
 
-loadPkg("tidyverse")
+loadPkg("dplyr")
 loadPkg("kableExtra")
 loadPkg("corrplot")
 loadPkg("leaps")
 loadPkg("faraway")
-loadPkg("car")
 loadPkg("caret")
+loadPkg("car")
+loadPkg("stringr")
+loadPkg("plotmo")
+loadPkg("glmnet")
+loadPkg("RColorBrewer")
 
 # ------------------------------------------------------------------------
 # plotting functions
@@ -59,29 +63,30 @@ Data Wine'ing previously used the Wine Reviews dataset publish by Zach Thoutt on
 
 ```{r glance over the dataset}
 
-raw_wine_reviews.df <- read.csv("data/wine_reviews.csv")
+setwd("~/Desktop/Git/edwinbet")
+raw_wine_reviews.df <- read.csv("data/wine_reviews.csv") 
 
-# counting missing values & get a glimpse of the data 
-# raw_wine_reviews.df %>% summarise_all(function(x){sum((is.na(x)|x == ""))/nrow(.)})  
+# # counting missing values & get a glimpse of the data
+# raw_wine_reviews.df %>% summarise_all(function(x){sum((is.na(x)|x == ""))/nrow(.)})
 # raw_wine_reviews.df %>% glimpse()
 
 ```
 
 ### Correlational Analysis 
 
-Below is a simple correlational analysis of the following variables 
+Below is a simple correlation analysis of the following variables 
 
 - points - The number of points awarded to the wine by WineEnthusiast 
 - price - The price of the wine at the time of the review 
 - year - The year the wine was produced, parsed from the title 
-- red -  Equal to 1 if the variety of wine is red and 0 othersie 
+- red -  Equal to 1 if the variety of wine is red and 0 otherwise 
 - dom - Equal to 1 if the wine produced in the United States 
 - fol - The number of Twitter followers of the critic who wrote the review
-- lon - The longidtude of the region where the wine was produced 
+- lon - The longitude of the region where the wine was produced 
 - lat - The latitude of the region where the wine was produced 
-- el - The elavation of the region wehre the wine was produced
+- el - The elevation of the region where the wine was produced
 
-As one might have expected, the greatest correlation is between the dom and lat, lon and el. The correlation table is consistent with the results in the previous iteration of this project, price is has a moderate postive correlation and year has a weak negetive correlation with points. 
+As one might have expected, the greatest correlation is between the dom and lat, lon and el. The correlation table is consistent with the results in the previous iteration of this project, price is has a moderate positive correlation and year has a weak negative correlation with points. 
 
 
 ```{r corrplot}
@@ -90,66 +95,53 @@ As one might have expected, the greatest correlation is between the dom and lat,
 # regular correlation analysis 
 # -----------------------------------------------------------------------------
 
-# tasters <- c(
-#   "Alexander Peartree", "Anna Lee C. Iijima", "Anne Krebiehl MW",
-#   "Carrie Dykes", "Christina Pickard", "Fiona Adams", "Jeff Jenssen",
-#   "Jim Gordon", "Joe Czerwinski", "Kerin O’Keefe", "Lauren Buzzeo",
-#   "Matt Kettmann", "Michael Schachner", "Mike DeSimone", "Paul Gregutt",
-#   "Roger Voss", "Sean P. Sullivan", "Susan Kostrzewa", "Virginie Boone"
-# )
-# flavors <- c(
-#  "acidity", "tannins", "cherry", "black", "ripe", "red", "spice", "oak", "fresh",
-#  "rich", "dry", "berry", "nose", "plum", "soft", "apple", "fruits",
-#  "sweet", "white", "crisp", "blackberry", "light", "dark", "citrus",
-#  "bodied", "vanilla", "bright", "pepper", "green", "lemon",
-#  "raspberry", "peach", "chocolate", "dried", "pear"
-# )
-
 wine_reviews.df <- raw_wine_reviews.df %>%
   mutate(
-    red = ifelse(color == "red", 1, 0),
-    dom = ifelse(country == "US", 1, 0)
+    dom = ifelse(country == "US", 1, 0),
+    red = ifelse(color == "red", 1, 0)
   ) %>%
-    rename(
-    fol = taster_following, name = taster_name
-  ) %>% 
-  select( # select variables for analysis
-    points, price, year, red, dom, fol,
-    el, lat, lon
-  ) %>% 
+  select(-c("X.1", "X", "country", "description", "designation", "province",
+      "region_1", "region_2", "taster_name", "taster_twitter_handle",
+      "title", "variety", "winery", "color"
+  )) %>%
   mutate_all(as.numeric) %>%
-  filter_all(function(x){!is.na(x)})
+  filter_all(function(x) {
+    !is.na(x)
+  })
 
 # corrplot
 wine_reviews.df %>%
+  select(points, price, year, red, dom, fol,
+    el, lat, lon) %>%
   cor() %>% corrplot.mixed()
 
-# -----------------------------------------------------------------------------
-# critics and flavors 
-# -----------------------------------------------------------------------------
-
-# raw_wine_reviews.df %>%
-#   select(
-#     points, acidity, tannins, cherry, ripe, spice, oak, fresh, rich, dry,
-#     Alexander.Peartree, Anna.Lee.C..Iijima, Carrie.Dykes, Christina.Pickard, Fiona.Adams,
-#     Jeff.Jenssen, Jim.Gordon, Joe.Czerwinski, Kerin.O.Keefe, Lauren.Buzzeo, Mike.DeSimone,
-#     Paul.Gregutt, Roger.Voss
-#   ) %>% 
-#   filter_all(function(x){!is.na(x)}) %>%
-#   cor() %>% corrplot(method = "color")
+# critics 
+wine_reviews.df %>%
+  select(
+    points, "Alexander.Peartree", "Anna.Lee.C..Iijima", 
+    "Carrie.Dykes", "Christina.Pickard", "Fiona.Adams", "Jeff.Jenssen",
+    "Jim.Gordon", "Joe.Czerwinski", "Kerin.O.Keefe", "Lauren.Buzzeo",
+    "Matt.Kettmann", "Michael.Schachner", "Mike.DeSimone", "Paul.Gregutt",
+    "Roger.Voss", "Sean.P..Sullivan", "Susan.Kostrzewa", "Virginie.Boone"
+  ) %>%
+  cor() %>%
+  corrplot.mixed()
 
 
 ```
 
 ### Feature Selection 
 
-In this section Data Wine'ing employs mutivariate regression analysis to estimate the effect the variables discussed the previous section on points. Data Wine'ing conducted an exhaustive search of linear models on points usings the function `regsubsets()` from the the leaps package, keeping the best two subsets of explanatory variables for each size. Data Wine'ing then evaluated each of the models using Mallows's Cp (Cp), Bayesian Information Criterion (BIC) and the Adjusted R Squared. We found that the fill model minimized the Cp, BIC and Adjusted R Squared. The variance inflation factor (VIF) of the full model suggested no multicolearity betwen coefficients. Furthermore when trained and tested on the seperate paritions of the data the full model peroformed similarly in the training (0.20) and test datasets (0.18). 
+In this section Data Wine'ing employs multivariate regression analysis to estimate the effect the variables discussed the previous section on points. Data Wine'ing conducted an exhaustive search of linear models on points using the function `regsubsets()` from the the leaps package, keeping the best two subsets of explanatory variables for each size. Data Wine'ing then evaluated each of the models using Mallows's Cp (Cp), Bayesian Information Criterion (BIC) and the Adjusted R Squared. We found that the model including variables price, dom, Anna.Lee.C..Iijima, Jim.Gordon, Matt.Kettmann, Michael.Schachner, Paul.Gregutt, Virginie.Boone minimized the Cp, BIC and maximized the Adjusted R Squared. The variance inflation factor (VIF) of the model suggested no multicolinearity between coefficients. Furthermore when trained and tested on the separate partitions of the data the full model performed similarly in the training (0.225) and test datasets (0.223). 
 
 ```{r feature selection (adjr2)}
 
+# subset for now 
+# wine_reviews.df <- wine_reviews.df %>% select(-contains("country"))
+
 # generate tables 
 regsub <- regsubsets(points ~ . , data = wine_reviews.df, method = "exhaustive", nbest = 2)
-summary(regsub)
+# summary(regsub)
 
 # make plots 
 plot(regsub, scale = "adjr2")
@@ -162,15 +154,16 @@ p.info <- subsets(regsub,statistic = "bic", legend = F, min.size = 3, main = "BI
 p.info <- subsets(regsub,statistic = "cp", legend = F, min.size = 3, main = "Cp")
 abline(a = 1, b = 1, lty = 2)
 
-# return best model using each of the metrics
-# which.max(summary(regsub)$adjr2)
-# which.min(summary(regsub)$bic)
-# which.min(summary(regsub)$cp)
+# # return best model using each of the metrics
+#  which.max(summary(regsub)$adjr2) 
+#  which.min(summary(regsub)$bic)
+#  which.min(summary(regsub)$cp)
 
 # build model
-adjr2.m <- lm(data = wine_reviews.df, formula = points ~ .)
+adjr2.m <- lm(data = wine_reviews.df, formula = points ~ price + Anna.Lee.C..Iijima +
+    Jim.Gordon + Matt.Kettmann + Michael.Schachner + Paul.Gregutt + Virginie.Boone + dom)
 
-# check for multicollinearity
+# # check for multicollinearity
 # vif(adjr2.m)
 
 # -----------------------------------------------------------------------------
@@ -186,17 +179,70 @@ test.df  <- anti_join(wine_reviews.df, train.df , by = 'id')
 # Estimate model
 model.m <- lm(points ~ . -id, data = train.df)
 
-# Make predictions and compute the R2, RMSE and MAE
-predict.v <- model.m %>% predict(test.df)
+# # Make predictions and compute the R2, RMSE and MAE
+# predict.v <- model.m %>% predict(test.df)
 # data.frame(
 #   R2 = R2(predict.v, test.df$points),
 #   RMSE = RMSE(predict.v, test.df$points),
 #   MAE = MAE(predict.v, test.df$points)
 # )
-
+# 
+# # clean up 
+# rm(adjr2.m, p.info, regsub, model.m, test.df, train.df, predict.v)
 ```
 
 
+### Lasso Regression 
+
+Although the stepwise regression revealed what might have been meaningful relationships in the data, stepwise regression is often criticized for producing R-squared values that are badly biased to be high.Therefore, Data Wine'ing has chosen to supplement it's feature selection with regularization. Below we estimate a LASSO regression and perform parameter tuning on the data. We find the model that minimized the mean squared error has a $\lambda$ of 0.001 and only sets the parameter of Anne.Krebiehl.MW equal to 0. In contrast the model which gives the most regularized model such that error is within one standard error of the minimum has as $\lambda$ of 0.0599 and sets the parameters of Anne.Krebiehl.MW, Carrie.Dykes, Christina.Pickard, Fiona.Adams, Jeff.Jenssen, Joe.Czerwinski, Kerin.O.Keef, Lauren.Buzzeo, Mike.DeSimone, Roger.Voss, Sean.P..Sullivan, lon and el equal to 0. We find that both model preform similar, explaining roughly $24\%$ and $23\%$ of the variation in the data respectively.  
+
+```{r}
+
+set.seed(123)    # set seed for reproducibility
+
+# center y, X will be standardized in the modelling function
+y <- wine_reviews.df %>% select(points) %>% scale(center = TRUE, scale = FALSE) %>% as.matrix()
+X <- wine_reviews.df %>% select(-points, -id) %>% as.matrix()
+
+# 10 fold cross validation
+lambdas_to_try <- 10^seq(-3, 5, length.out = 100)
+lasso <- cv.glmnet(X, y, lambda = lambdas_to_try, standardize = TRUE, nfolds = 10)
+
+# plot cross validation 
+plot(lasso, axes = F)
+axis(side = 1, at = -10:10)
+
+# -----------------------------------------------------------------------------
+# test 
+# -----------------------------------------------------------------------------
+
+# fit model that minimizes square residuals 
+lambda <- lasso$lambda.min
+model <- glmnet(X, y, lambda = lambda, standardize = TRUE)
+y_hat <- predict(model, X)
+ssr <- t(y - y_hat) %*% (y - y_hat)
+rsq_lasso_min <- cor(y, y_hat)^2
+# model$beta
+
+
+lambda <- lasso$lambda.1se
+model <- glmnet(X, y, lambda = lambda, standardize = TRUE)
+y_hat <- predict(model, X)
+ssr <- t(y - y_hat) %*% (y - y_hat)
+rsq_lasso_1se <- cor(y, y_hat)^2
+# model$beta
+
+# ---------------------------------------------------------------------------
+# plot 
+# ---------------------------------------------------------------------------
+
+# plot lasso 
+res <- glmnet(X, y, alpha = 1, lambda = lambdas_to_try, standardize = FALSE)
+plot_glmnet(res, xvar = "lambda", label = T, xlim= c(-7, 2), col = brewer.pal(5, "Dark2"))
+
+# clean up 
+rm(X, y, lambda, y_hat, ssr, modle, res)
+```
 
 
 
