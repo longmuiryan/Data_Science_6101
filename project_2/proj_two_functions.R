@@ -40,7 +40,7 @@ xkabledply = function(modelsmmrytable, title="Table", digits = 4, pos="left", bs
 # xkable summary
 # -----------------------------------------------------------------------------
 
-xkablesummary <- function(df) {
+xkablesummary <- function(df, ...) {
   # Combining base::summary, xtable, and kableExtra, to easily display numeric variable summary of dataframes.
   # If the categorical variables has less than 6 levels, the function will still run without error.
   # ELo 202003 GWU DATS
@@ -60,7 +60,7 @@ xkablesummary <- function(df) {
   if (dim(s)[1] == 6) {rownames(s) <- c("Min", "Q1", "Median", "Mean", "Q3", "Max")
   } else if (dim(s)[1] == 7) {rownames(s) <- c("Min", "Q1", "Median", "Mean", "Q3", "Max", "NA")}
   
-  s %>% xkabledply("Table: Statistics summary.", "center")
+  s %>% xkabledply("Table: Statistics summary.", "center", ...)
 }
 
 # -----------------------------------------------------------------------------
@@ -105,18 +105,16 @@ uzscale <- function(df, append=0, excl=NULL) {
 # clusterPlot 
 # ------------------------------------------------------------------------------
 
-clusterPlot <- function(df, var) {
+clusterPlot <- function(df, var, title) {
   var <- enquo(var)
   p.info <- df %>%
     mutate(cluster = k$cluster) %>%
     select(cluster, !!var) %>%
     melt(id.vars = "cluster") %>%
-    ggplot(aes(y = value, x = paste(variable, cluster, sep = " \n cluster \n"))) +
+    ggplot(aes(y = value, x = paste("Cluster", cluster))) +
     geom_boxplot(color = "#B31B1B", fill = "#F4C2C2", size = 1.3, outlier.colour = "black", outlier.size = 4) +
-    labs(x = "Price") +
-    ggtitle("Price by Cluster") +
-    theme(plot.title = element_text(hjust = 0.5)) +
-    theme(plot.title = element_text(size = 25))
+    labs(x = title) + ggtitle(paste(title, "by Cluster")) + theme(plot.title = element_text(hjust = 0.5, size = 16),
+    axis.text = element_text(size=10), axis.title = element_text(size=12))
   return(p.info)
 }
 

@@ -42,6 +42,9 @@ knitr::opts_chunk$set(fig.width = 12, fig.height = 4,
 wine_reviews <- data.frame(read.csv("data/wine_reviews.csv"))
 
 ```
+
+
+
 ```{r xkable}
 
 # use this function to conveniently load libraries and work smoothly with knitting
@@ -217,6 +220,8 @@ wine2.trainLabels <- wine2[wine2_sample==1, 9]
 wine2.testLabels <- wine2[wine2_sample==2, 9]
 
 ```
+
+
 ```{r KNN model}
 
 # running the model 
@@ -255,6 +260,8 @@ for (kval in 3:15) {
   # print("Other metrics : ")
 }
 ```
+
+
 ```{r, results="asis"}
 xkabledply(confusionMatrixResultDf)
 ```
