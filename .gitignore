@@ -1,6 +1,5 @@
 *.DS_Store
 *-Ex.R
-*.html
 *.httr-oauth
 *.knit.md
 *.Rproj.user
