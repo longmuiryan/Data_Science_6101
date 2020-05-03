@@ -96,10 +96,10 @@ As one might have expected, the greatest correlation is between the dom and lat,
 # -----------------------------------------------------------------------------
 
 wine_reviews.df <- raw_wine_reviews.df %>%
-  rename( 
-    lat = comp_lat, lon = comp_lon, el = comp_el, 
+  rename(
+    lon = comp_lon, lat = comp_lat, el = comp_el,
     fol = taster_following
-  ) %>%
+  ) %>% 
   mutate(
     dom = ifelse(country == "US", 1, 0),
     red = ifelse(color == "red", 1, 0)
